@@ -6,6 +6,7 @@ import Footer from "../../components/Footer.astro";
 const title = "no-tone | projects";
 const description =
   "Browse no-tone GitHub projects, repositories, tech stacks, and published websites.";
+const cspNonce = Astro.locals.cspNonce;
 ---
 
 <!doctype html>
@@ -94,7 +95,7 @@ const description =
     </main>
     <Footer />
 
-    <script>
+    <script nonce={cspNonce}>
       import initProjectsPage from "../../scripts/projects-page.ts";
 
       initProjectsPage();

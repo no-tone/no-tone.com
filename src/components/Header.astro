@@ -2,6 +2,7 @@
 import { isSameOriginReferrer } from "../utils/navigation";
 
 const isHome = Astro.url.pathname === "/";
+const cspNonce = Astro.locals.cspNonce;
 const canGoBack = isSameOriginReferrer(
   Astro.request.headers.get("referer"),
   Astro.url.origin,
@@ -34,7 +35,7 @@ const canGoBack = isSameOriginReferrer(
   </nav>
 </header>
 
-<script>
+<script nonce={cspNonce}>
   import initHeader from "../scripts/header.ts";
 
   initHeader();
