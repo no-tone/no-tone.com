@@ -1,5 +1,5 @@
 ---
-import globalCss from "../styles/global.css?raw";
+import globalCssUrl from "../styles/global.css?url";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../consts";
 
 interface Props {
@@ -57,7 +57,8 @@ const resolvedSchema = [...defaultSchema, ...schemaItems];
 <link rel="icon" type="image/png" sizes="32x32" href="/y.png" />
 <meta name="generator" content={Astro.generator} />
 <meta name="robots" content="index,follow" />
-<style nonce={cspNonce} set:html={globalCss}></style>
+<link rel="preload" as="style" href={globalCssUrl} />
+<link rel="stylesheet" href={globalCssUrl} />
 
 <!-- Preconnect to primary origin (covers HTML, API, assets) -->
 <link rel="preconnect" href={canonicalURL.origin} />
