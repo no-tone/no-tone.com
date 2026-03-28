@@ -20,9 +20,6 @@ export default defineConfig({
       },
     ],
   },
-  session: {
-    driver: "memory",
-  },
   output: "server",
   integrations: [mdx(), sitemap()],
   adapter: cloudflare({
