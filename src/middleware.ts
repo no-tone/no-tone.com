@@ -37,7 +37,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 	const contentType = response.headers.get('Content-Type') || '';
 	if (contentType.startsWith('text/html')) {
 		response.headers.set('Content-Type', 'text/html; charset=utf-8');
-		response.headers.set('Cache-Control', 'private, no-store');
+		response.headers.set('Cache-Control', 'private, max-age=0, must-revalidate');
 	}
 
 	const isLocalDev =
@@ -78,6 +78,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 		scriptSrc,
 		styleSrc,
 		"img-src 'self' https: data:",
+		"manifest-src 'self'",
 		"font-src 'self' https: data:",
 		"connect-src 'self' https://api.github.com",
 		"frame-ancestors 'none'",

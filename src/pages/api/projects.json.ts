@@ -1,5 +1,12 @@
 import type { APIContext } from 'astro';
 import { getClientIp } from '../../utils/request';
+import {
+	buildRateLimitCacheRequest,
+	getRateLimitResetAt,
+	parseRateLimitCount,
+	simplifyRepos,
+	type SimplifiedRepo,
+} from '../../utils/projects-api';
 
 const GITHUB_API_URL =
 	'https://api.github.com/users/n0-tone/repos?per_page=100&sort=updated';
@@ -10,37 +17,6 @@ const LAST_UPDATED_HEADER = 'x-no-tone-last-updated';
 const RATE_LIMIT_MAX = 90;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const ALLOW_METHODS = 'GET';
-
-interface GithubRepo {
-	name?: string;
-	html_url?: string;
-	homepage?: string | null;
-	language?: string | null;
-	description?: string | null;
-	topics?: string[];
-	fork?: boolean;
-	forks_count?: number;
-	archived?: boolean;
-	has_pages?: boolean;
-	stargazers_count?: number;
-	updated_at?: string;
-	[other: string]: unknown;
-}
-
-interface SimplifiedRepo {
-	name: string;
-	url: string;
-	homepage: string;
-	language: string;
-	description: string;
-	topics: string[];
-	isFork: boolean;
-	isArchived: boolean;
-	hasPages: boolean;
-	stars: number;
-	forks: number;
-	updatedAt: string;
-}
 
 type RateLimitEntry = { count: number; resetAt: number };
 type RateLimitState = {
@@ -53,28 +29,6 @@ type RateLimitState = {
 const rateLimitStore: Map<string, RateLimitEntry> =
 	(globalThis as any).__noToneProjectRateLimit ??
 	((globalThis as any).__noToneProjectRateLimit = new Map<string, RateLimitEntry>());
-
-const simplifyRepos = (repos: unknown): SimplifiedRepo[] => {
-	if (!Array.isArray(repos)) return [];
-	return repos
-		.filter((repo): repo is GithubRepo => !!repo && typeof repo === 'object')
-		.filter((repo) => repo.name && repo.html_url)
-		.map((repo) => ({
-			name: String(repo.name),
-			url: String(repo.html_url),
-			homepage: repo.homepage ? String(repo.homepage) : '',
-			language: repo.language ? String(repo.language) : 'Other',
-			description: repo.description ? String(repo.description) : '',
-			topics: Array.isArray(repo.topics) ? repo.topics : [],
-			isFork: !!repo.fork,
-			isArchived: !!repo.archived,
-			hasPages: !!repo.has_pages,
-			stars:
-				typeof repo.stargazers_count === 'number' ? repo.stargazers_count : 0,
-			forks: typeof repo.forks_count === 'number' ? repo.forks_count : 0,
-			updatedAt: repo.updated_at ? String(repo.updated_at) : '',
-		}));
-};
 
 const buildHeaders = (origin: string | null) => {
 	const headers: Record<string, string> = {
@@ -94,7 +48,10 @@ const buildHeaders = (origin: string | null) => {
 	return headers;
 };
 
-const readRateLimit = (request: Request, nowMs: number): RateLimitState => {
+const readRateLimitFromMemory = (
+	request: Request,
+	nowMs: number,
+): RateLimitState => {
 	const ip = getClientIp(request);
 	const current = rateLimitStore.get(ip);
 	if (!current || current.resetAt <= nowMs) {
@@ -116,6 +73,52 @@ const readRateLimit = (request: Request, nowMs: number): RateLimitState => {
 		resetAt: current.resetAt,
 		blocked,
 	};
+};
+
+const readRateLimit = async (
+	request: Request,
+	nowMs: number,
+	cache: Cache | undefined,
+): Promise<RateLimitState> => {
+	if (!cache) {
+		return readRateLimitFromMemory(request, nowMs);
+	}
+
+	try {
+		const clientKey = getClientIp(request);
+		const cacheKey = buildRateLimitCacheRequest(
+			clientKey,
+			nowMs,
+			RATE_LIMIT_WINDOW_MS,
+		);
+		const existing = await cache.match(cacheKey);
+		const currentCount = existing
+			? parseRateLimitCount(await existing.text())
+			: 0;
+		const nextCount = currentCount + 1;
+		const resetAt = getRateLimitResetAt(nowMs, RATE_LIMIT_WINDOW_MS);
+		const ttlSeconds = Math.max(1, Math.ceil((resetAt - nowMs) / 1000));
+
+		await cache.put(
+			cacheKey,
+			new Response(String(nextCount), {
+				headers: {
+					'Content-Type': 'text/plain; charset=utf-8',
+					'Cache-Control': `max-age=${ttlSeconds}`,
+				},
+			}),
+		);
+
+		const blocked = nextCount > RATE_LIMIT_MAX;
+		return {
+			limit: RATE_LIMIT_MAX,
+			remaining: blocked ? 0 : Math.max(0, RATE_LIMIT_MAX - nextCount),
+			resetAt,
+			blocked,
+		};
+	} catch {
+		return readRateLimitFromMemory(request, nowMs);
+	}
 };
 
 const attachRateLimitHeaders = (
@@ -174,11 +177,14 @@ const isFresh = (cachedAtMs: number, nowMs: number): boolean => {
 const responseFromCached = (
 	cached: Response,
 	origin: string | null,
-	rate: RateLimitState,
+	rate?: RateLimitState,
+	extra?: Record<string, string>,
 ): Response => {
 	const etag = cached.headers.get('ETag');
 	const lastUpdated = cached.headers.get(LAST_UPDATED_HEADER);
-	const headers = buildHeadersWithRate(origin, rate);
+	const headers = rate
+		? buildHeadersWithRate(origin, rate, extra)
+		: { ...buildHeaders(origin), ...(extra ?? {}) };
 	if (etag) headers['ETag'] = etag;
 	if (lastUpdated) headers[LAST_UPDATED_HEADER] = lastUpdated;
 	return new Response(cached.body, { status: 200, headers });
@@ -189,6 +195,17 @@ const methodNotAllowed = (
 	rate: RateLimitState,
 ): Response => {
 	return jsonError(405, 'Method Not Allowed', origin, rate, { Allow: ALLOW_METHODS });
+};
+
+const logProjectsApiIssue = (
+	event: string,
+	details: Record<string, unknown>,
+): void => {
+	console.warn('[projects-api]', {
+		event,
+		route: '/api/projects.json',
+		...details,
+	});
 };
 
 const toCachedResponse = (
@@ -211,19 +228,20 @@ export async function GET(context: APIContext): Promise<Response> {
 	const origin = request.headers.get('Origin');
 	const secFetchSite = request.headers.get('Sec-Fetch-Site');
 	const nowMs = Date.now();
-	const rate = readRateLimit(request, nowMs);
 
 	// Basic origin check: allow same-origin requests and non-CORS requests (like server-to-server or direct curl)
 	if (origin && origin !== siteOrigin) {
-		return jsonError(403, 'Forbidden', null, rate);
+		return new Response(JSON.stringify({ error: 'Forbidden' }), {
+			status: 403,
+			headers: buildHeaders(null),
+		});
 	}
 
 	if (secFetchSite && secFetchSite === 'cross-site') {
-		return jsonError(403, 'Forbidden', origin ?? null, rate);
-	}
-
-	if (rate.blocked) {
-		return jsonError(429, 'Too Many Requests', origin ?? null, rate);
+		return new Response(JSON.stringify({ error: 'Forbidden' }), {
+			status: 403,
+			headers: buildHeaders(origin ?? null),
+		});
 	}
 
 	const cache = (globalThis as any).caches?.default as Cache | undefined;
@@ -237,12 +255,25 @@ export async function GET(context: APIContext): Promise<Response> {
 	if (cache) {
 		cached = (await cache.match(cacheKey)) ?? undefined;
 		if (cached && isFresh(readCachedAtMs(cached), nowMs)) {
-			return responseFromCached(cached, origin ?? null, rate);
+			return responseFromCached(cached, origin ?? null, undefined, {
+				'X-No-Tone-Cache': 'hit',
+			});
 		}
+	}
+
+	const rate = await readRateLimit(request, nowMs, cache);
+	if (rate.blocked) {
+		return jsonError(429, 'Too Many Requests', origin ?? null, rate, {
+			'Retry-After': String(Math.max(1, Math.ceil((rate.resetAt - nowMs) / 1000))),
+		});
+	}
+
+	if (cache && cached) {
 		if (cached) {
 			const cachedRes = cached;
 			const cachedEtag = cached.headers.get('ETag');
 			const revalidate = async () => {
+				const upstreamStartedAt = Date.now();
 				try {
 					const upstream = await fetch(GITHUB_API_URL, {
 						headers: {
@@ -262,7 +293,13 @@ export async function GET(context: APIContext): Promise<Response> {
 						return;
 					}
 
-					if (!upstream.ok) return;
+					if (!upstream.ok) {
+						logProjectsApiIssue('background_revalidate_failed', {
+							status: upstream.status,
+							latencyMs: Date.now() - upstreamStartedAt,
+						});
+						return;
+					}
 
 					const raw = await upstream.json();
 					const simplified = simplifyRepos(raw);
@@ -272,27 +309,58 @@ export async function GET(context: APIContext): Promise<Response> {
 						cacheKey,
 						toCachedResponse(body, etag, getLastUpdatedAt(simplified)),
 					);
-				} catch {
-					// ignore revalidation errors
+				} catch (error) {
+					logProjectsApiIssue('background_revalidate_threw', {
+						latencyMs: Date.now() - upstreamStartedAt,
+						error: error instanceof Error ? error.message : 'unknown-error',
+					});
 				}
 			};
 
 			// Stale-while-revalidate: serve cached immediately and refresh in background
 			if (waitUntil) waitUntil(revalidate());
-			return responseFromCached(cached, origin ?? null, rate);
+			return responseFromCached(cached, origin ?? null, rate, {
+				'X-No-Tone-Cache': 'stale',
+				Warning: '110 - "Response is stale"',
+			});
 		}
 	}
 
 	// Fetch from GitHub (optionally revalidate with ETag)
 	const cachedEtag = cached?.headers.get('ETag');
-	const upstream = await fetch(GITHUB_API_URL, {
-		headers: {
-			// GitHub requires a User-Agent
-			'User-Agent': 'no-tone-site',
-			'Accept': 'application/vnd.github.mercy-preview+json', // Needed for topics
-			...(cachedEtag ? { 'If-None-Match': cachedEtag } : {}),
-		},
-	});
+	const upstreamStartedAt = Date.now();
+	let upstream: Response;
+	try {
+		upstream = await fetch(GITHUB_API_URL, {
+			headers: {
+				// GitHub requires a User-Agent
+				'User-Agent': 'no-tone-site',
+				'Accept': 'application/vnd.github.mercy-preview+json', // Needed for topics
+				...(cachedEtag ? { 'If-None-Match': cachedEtag } : {}),
+			},
+		});
+	} catch (error) {
+		logProjectsApiIssue('upstream_threw', {
+			latencyMs: Date.now() - upstreamStartedAt,
+			hasCachedResponse: !!cached,
+			error: error instanceof Error ? error.message : 'unknown-error',
+		});
+		if (cached) {
+			return responseFromCached(cached, origin ?? null, rate, {
+				'X-No-Tone-Cache': 'stale',
+				Warning: '110 - "Response is stale"',
+			});
+		}
+		return jsonError(
+			503,
+			'Projects are temporarily unavailable',
+			origin ?? null,
+			rate,
+			{
+				'Retry-After': String(BROWSER_TTL_SECONDS),
+			},
+		);
+	}
 
 	if (upstream.status === 304 && cached) {
 		// Not modified: reuse cached body but bump cached timestamp
@@ -308,18 +376,35 @@ export async function GET(context: APIContext): Promise<Response> {
 		}
 		const headers = buildHeadersWithRate(origin ?? null, rate, {
 			[LAST_UPDATED_HEADER]: lastUpdated,
+			'Server-Timing': `github;dur=${Date.now() - upstreamStartedAt}`,
+			'X-No-Tone-Cache': 'revalidated',
 		});
 		return new Response(body, { status: 200, headers });
 	}
 
 	if (!upstream.ok) {
-		// If we have anything cached (even stale), serve it.
-		if (cached) return responseFromCached(cached, origin ?? null, rate);
-		const headers = buildHeadersWithRate(origin ?? null, rate);
-		return new Response(JSON.stringify([]), {
-			status: 200,
-			headers,
+		logProjectsApiIssue('upstream_failed', {
+			status: upstream.status,
+			latencyMs: Date.now() - upstreamStartedAt,
+			hasCachedResponse: !!cached,
 		});
+		// If we have anything cached (even stale), serve it.
+		if (cached) {
+			return responseFromCached(cached, origin ?? null, rate, {
+				'X-No-Tone-Cache': 'stale',
+				Warning: '110 - "Response is stale"',
+			});
+		}
+		return jsonError(
+			503,
+			'Projects are temporarily unavailable',
+			origin ?? null,
+			rate,
+			{
+				'Retry-After': String(BROWSER_TTL_SECONDS),
+				'X-Upstream-Status': String(upstream.status),
+			},
+		);
 	}
 
 	const raw = await upstream.json();
@@ -342,15 +427,19 @@ export async function GET(context: APIContext): Promise<Response> {
 
 	const headers = buildHeadersWithRate(origin ?? null, rate, {
 		[LAST_UPDATED_HEADER]: lastUpdated,
+		'Server-Timing': `github;dur=${Date.now() - upstreamStartedAt}`,
+		'X-No-Tone-Cache': 'miss',
 	});
 	return new Response(body, { status: 200, headers });
 }
 
 const methodNotAllowedHandler = (context: APIContext): Response =>
-	methodNotAllowed(
-		context.request.headers.get('Origin'),
-		readRateLimit(context.request, Date.now()),
-	);
+	methodNotAllowed(context.request.headers.get('Origin'), {
+		limit: RATE_LIMIT_MAX,
+		remaining: RATE_LIMIT_MAX,
+		resetAt: Date.now() + RATE_LIMIT_WINDOW_MS,
+		blocked: false,
+	});
 
 export const POST = methodNotAllowedHandler;
 export const PUT = methodNotAllowedHandler;

@@ -1,6 +1,11 @@
 ---
+import { isSameOriginReferrer } from "../utils/navigation";
+
 const isHome = Astro.url.pathname === "/";
-const cspNonce = Astro.locals.cspNonce;
+const canGoBack = isSameOriginReferrer(
+  Astro.request.headers.get("referer"),
+  Astro.url.origin,
+);
 ---
 
 <header class="topbar">
@@ -11,7 +16,8 @@ const cspNonce = Astro.locals.cspNonce;
     <button
       class="topbar__back"
       type="button"
-      aria-label="Go back"
+      aria-label={canGoBack ? "Go back" : "Return home"}
+      data-can-go-back={canGoBack ? "true" : "false"}
       hidden={isHome}
     >
       <span aria-hidden="true">←</span>
@@ -28,64 +34,8 @@ const cspNonce = Astro.locals.cspNonce;
   </nav>
 </header>
 
-<script is:inline nonce={cspNonce}>
-  (() => {
-    const toggle = document.querySelector(".topbar__toggle");
-    const icon = document.querySelector(".topbar__toggleIcon");
-    const back = document.querySelector(".topbar__back");
-    if (!toggle || !icon) return;
+<script>
+  import initHeader from "../scripts/header.ts";
 
-    const noTone = window.noTone;
-    if (
-      !noTone?.readTheme ||
-      !noTone?.applyTheme ||
-      !noTone?.getStoredTheme ||
-      !noTone?.setStoredTheme
-    ) {
-      return;
-    }
-
-    const apply = (theme) => {
-      noTone.applyTheme(theme);
-      icon.textContent = theme === "dark" ? "☾" : "☀︎";
-    };
-
-    const syncFromStorage = () => {
-      const stored = noTone.getStoredTheme();
-      const theme = noTone.readTheme();
-      apply(theme);
-      if (!stored) {
-        noTone.setStoredTheme(theme);
-      }
-    };
-
-    // Initial sync with localStorage (or dark by default)
-    syncFromStorage();
-
-    // Keep theme in sync when navigating with the browser back/forward buttons
-    window.addEventListener("pageshow", () => {
-      syncFromStorage();
-    });
-
-    // Sync across tabs/windows if theme changes elsewhere
-    window.addEventListener("storage", (event) => {
-      if (event.key === "theme") {
-        syncFromStorage();
-      }
-    });
-
-    toggle.addEventListener("click", () => {
-      const current =
-        document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-      const next = current === "dark" ? "light" : "dark";
-      apply(next);
-      noTone.setStoredTheme(next);
-    });
-
-    if (back && !back.hidden) {
-      back.addEventListener("click", () => {
-        window.location.href = "/";
-      });
-    }
-  })();
+  initHeader();
 </script>

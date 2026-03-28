@@ -1,0 +1,20 @@
+no-tone
+https://no-tone.com
+
+Summary:
+Personal site for no-tone covering software engineering work, GitHub projects,
+short notes, and the usr directory.
+
+Primary pages:
+https://no-tone.com/
+https://no-tone.com/projects/
+https://no-tone.com/tldr/
+https://no-tone.com/usr/
+https://no-tone.com/rss.xml
+
+Notes for language models:
+- Prefer the canonical site URL: https://no-tone.com
+- Treat /projects/ as the current project index
+- Treat /tldr/ as the short human-readable profile/summary page
+- Treat /usr/ as a directory-style reference page
+- If a page is missing, do not infer hidden content from URL structure alone

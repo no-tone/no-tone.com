@@ -1,5 +1,5 @@
 ---
-import globalCss from "../styles/global.css?raw";
+import "../styles/global.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../consts";
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
 const {
   title,
   description,
-  image = "/og.png",
+  image = "/images/meta/og.png",
   schema,
 } = Astro.props as Props;
 const jbMonoFontUrl = import.meta.env.PUBLIC_JB_MONO_FONT_URL;
@@ -24,8 +24,8 @@ const canonicalURL = Astro.site
   ? new URL(Astro.url.pathname, Astro.site)
   : Astro.url;
 const ogImageUrl = new URL(image, Astro.url);
-const ogImageWidth = image === "/og.png" ? "1200" : undefined;
-const ogImageHeight = image === "/og.png" ? "630" : undefined;
+const ogImageWidth = image === "/images/meta/og.png" ? "1200" : undefined;
+const ogImageHeight = image === "/images/meta/og.png" ? "630" : undefined;
 const schemaItems = Array.isArray(schema) ? schema : schema ? [schema] : [];
 const defaultSchema = [
   {
@@ -56,15 +56,13 @@ const resolvedSchema = [...defaultSchema, ...schemaItems];
 <!-- Global Metadata -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/png" sizes="32x32" href="/y.png" />
-<link rel="apple-touch-icon" href="/y.png" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
 <meta name="generator" content={Astro.generator} />
 <meta name="robots" content="index,follow" />
-<style nonce={cspNonce} set:html={globalCss}></style>
-
-<!-- Preconnect to primary origin (covers HTML, API, assets) -->
-<link rel="preconnect" href={canonicalURL.origin} />
-
 <!-- Preconnect to Cloudflare Fonts origin -->
 {
   fontOrigin && fontOrigin !== canonicalURL.origin && (
@@ -92,53 +90,11 @@ const resolvedSchema = [...defaultSchema, ...schemaItems];
   })();
 </script>
 
-<!-- Shared client helpers (CSP-safe, no HTML sinks) -->
-<script is:inline nonce={cspNonce}>
-  (() => {
-    const root = (window.noTone ??= {});
-    const THEME_KEY = "theme";
+<!-- Shared client helpers -->
+<script>
+  import initSharedHead from "../scripts/shared-head.ts";
 
-    root.getStoredTheme = () => {
-      try {
-        const value = localStorage.getItem(THEME_KEY);
-        return value === "light" || value === "dark" ? value : null;
-      } catch {
-        return null;
-      }
-    };
-
-    root.setStoredTheme = (theme) => {
-      try {
-        localStorage.setItem(THEME_KEY, theme);
-      } catch {
-        // no-op
-      }
-    };
-
-    root.readTheme = () =>
-      root.getStoredTheme() ??
-      (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
-
-    root.applyTheme = (theme) => {
-      document.documentElement.dataset.theme = theme;
-    };
-
-    root.isSafeExternalUrl = (value) => {
-      try {
-        const raw = String(value || "").trim();
-        if (!raw) return false;
-        const u = new URL(raw);
-        return u.protocol === "http:" || u.protocol === "https:";
-      } catch {
-        return false;
-      }
-    };
-
-    root.openExternal = (url) => {
-      if (!root.isSafeExternalUrl(url)) return;
-      window.open(String(url), "_blank", "noopener,noreferrer");
-    };
-  })();
+  initSharedHead();
 </script>
 
 <!-- Canonical URL -->

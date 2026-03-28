@@ -9,13 +9,21 @@ import Footer from "../components/Footer.astro";
   <head>
     <BaseHead
       title="no-tone | 404"
-      description="The page you were looking for does not exist. Browse projects, TLDR notes, or the usr directory instead."
+      description="The page you were looking for does not exist. Browse projects, tldr notes, or the usr directory instead."
     />
   </head>
   <body>
     <Header />
     <main class="note note--error">
       <h1 class="page__title page__title--error">404</h1>
+      <p>
+        This is a broken link, or the page you were trying to open no longer
+        exists.
+      </p>
+      <p>
+        Try <a href="/projects/">/projects/</a>, <a href="/tldr/">/tldr/</a>,
+        or <a href="/usr/">/usr/</a>.
+      </p>
     </main>
     <Footer />
   </body>

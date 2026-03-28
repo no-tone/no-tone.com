@@ -1,5 +1,5 @@
 import type { APIContext } from 'astro';
-import { getClientIp } from '../../utils/request';
+import { summarizeCspReport } from '../../utils/csp-report';
 
 const noCacheHeaders = {
 	'Cache-Control': 'no-store',
@@ -20,12 +20,7 @@ const json = (body: Record<string, unknown>, status: number, extraHeaders?: Reco
 export async function POST({ request, url }: APIContext): Promise<Response> {
 	try {
 		const body = await request.text();
-		console.warn('[csp-report]', {
-			path: url.pathname,
-			ip: getClientIp(request),
-			size: body.length,
-			body,
-		});
+		console.warn('[csp-report]', summarizeCspReport(body, url.pathname));
 	} catch {
 		// ignore malformed payloads
 	}

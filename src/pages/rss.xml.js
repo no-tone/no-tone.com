@@ -6,19 +6,19 @@ export async function GET(context) {
   const pages = [
     {
       title: "projects",
-      description: "Projects page",
+      description: "projects page",
       link: "/projects/",
       pubDate: now,
     },
     {
       title: "tldr",
-      description: "TLDR page",
+      description: "tldr page",
       link: "/tldr/",
       pubDate: now,
     },
     {
       title: "usr",
-      description: "Usr page",
+      description: "usr page",
       link: "/usr/",
       pubDate: now,
     },
