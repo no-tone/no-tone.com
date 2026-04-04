@@ -881,45 +881,6 @@ body[data-window-mode="true"] .projects__panel {
   height: auto;
 }
 
-.lightbox {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-}
-
-.lightbox[hidden] {
-  display: none;
-}
-
-.lightbox__backdrop {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 24px;
-}
-
-.lightbox__content {
-  margin: 0;
-}
-
-.lightbox__img {
-  max-width: min(92vw, 980px);
-  max-height: 92vh;
-  width: auto;
-  height: auto;
-  image-rendering: auto;
-  border-radius: 8px;
-}
-
-html.is-lightbox-open .topbar__nav,
-html.is-lightbox-open .bottombar__nav {
-  pointer-events: none;
-}
-
 .desktopWindow {
   position: fixed;
   inset: 0;

@@ -27,7 +27,7 @@ const windowMode = Astro.url.searchParams.get("window") === "1";
     data-standalone-window={!windowMode ? "true" : undefined}
   >
     {!windowMode && <Header />}
-    <main class="note" data-window-root data-window-name="tldr">
+    <main class="note" data-window-root>
       <NoteDate nonce={cspNonce} />
       <h1 class="page__title">tldr/</h1>
       <div class="note__content">

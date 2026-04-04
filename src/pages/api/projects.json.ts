@@ -29,7 +29,6 @@ type LastSuccessSnapshot = {
 	body: string;
 	etag: string | null;
 	lastUpdated: string;
-	cachedAtMs: number;
 };
 
 const rateLimitStore: Map<string, RateLimitEntry> =
@@ -51,7 +50,6 @@ const writeLastSuccessSnapshot = (
 		body,
 		etag,
 		lastUpdated,
-		cachedAtMs: Date.now(),
 	} as LastSuccessSnapshot;
 };
 
@@ -163,6 +161,17 @@ const buildHeadersWithRate = (
 	const headers = { ...buildHeaders(origin), ...(extra ?? {}) };
 	attachRateLimitHeaders(headers, rate);
 	return headers;
+};
+
+const buildEmptyFallbackHeaders = (
+	origin: string | null,
+	rate: RateLimitState,
+	extra?: Record<string, string>,
+): Record<string, string> => {
+	return buildHeadersWithRate(origin, rate, {
+		'Cache-Control': 'no-store',
+		...(extra ?? {}),
+	});
 };
 
 const jsonError = (
@@ -322,10 +331,9 @@ export async function GET(context: APIContext): Promise<Response> {
 		}
 
 		if (cache && cached) {
-			if (cached) {
-				const cachedRes = cached;
-				const cachedEtag = cached.headers.get('ETag');
-				const revalidate = async () => {
+			const cachedRes = cached;
+			const cachedEtag = cached.headers.get('ETag');
+			const revalidate = async () => {
 					const upstreamStartedAt = Date.now();
 					try {
 						const upstream = await fetch(GITHUB_API_URL, {
@@ -371,15 +379,14 @@ export async function GET(context: APIContext): Promise<Response> {
 							error: error instanceof Error ? error.message : 'unknown-error',
 						});
 					}
-				};
+			};
 
-				// Stale-while-revalidate: serve cached immediately and refresh in background
-				if (waitUntil) waitUntil(revalidate());
-				return responseFromCached(cached, origin ?? null, rate, {
-					'X-No-Tone-Cache': 'stale',
-					Warning: '110 - "Response is stale"',
-				});
-			}
+			// Stale-while-revalidate: serve cached immediately and refresh in background
+			if (waitUntil) waitUntil(revalidate());
+			return responseFromCached(cached, origin ?? null, rate, {
+				'X-No-Tone-Cache': 'stale',
+				Warning: '110 - "Response is stale"',
+			});
 		}
 
 		// Fetch from GitHub (optionally revalidate with ETag)
@@ -413,7 +420,7 @@ export async function GET(context: APIContext): Promise<Response> {
 			}
 			return new Response('[]', {
 				status: 200,
-				headers: buildHeadersWithRate(origin ?? null, rate, {
+				headers: buildEmptyFallbackHeaders(origin ?? null, rate, {
 					[LAST_UPDATED_HEADER]: '',
 					'X-No-Tone-Cache': 'empty-fallback',
 					Warning: '110 - "Response is stale"',
@@ -464,7 +471,7 @@ export async function GET(context: APIContext): Promise<Response> {
 			}
 			return new Response('[]', {
 				status: 200,
-				headers: buildHeadersWithRate(origin ?? null, rate, {
+				headers: buildEmptyFallbackHeaders(origin ?? null, rate, {
 					[LAST_UPDATED_HEADER]: '',
 					'X-No-Tone-Cache': 'empty-fallback',
 					Warning: '110 - "Response is stale"',
@@ -522,6 +529,7 @@ export async function GET(context: APIContext): Promise<Response> {
 			status: 200,
 			headers: {
 				...buildHeaders(origin ?? null),
+				'Cache-Control': 'no-store',
 				[LAST_UPDATED_HEADER]: '',
 				'X-No-Tone-Cache': 'empty-fallback',
 				Warning: '110 - "Response is stale"',

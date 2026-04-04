@@ -308,7 +308,6 @@ const cspNonce = Astro.locals.cspNonce;
       ]);
 
       shell.hidden = true;
-      shell.classList.remove("desktopWindow--fullscreen");
       iframe.src = "about:blank";
       document.body.classList.remove("has-desktop-window-open");
       activeIcon = null;
@@ -325,7 +324,6 @@ const cspNonce = Astro.locals.cspNonce;
     fullscreenButton.addEventListener("click", () => {
       if (shell.hidden) return;
       isFullscreen = !isFullscreen;
-      shell.classList.toggle("desktopWindow--fullscreen", isFullscreen);
       void animateToRect(isFullscreen ? getFullscreenRect() : getNormalRect());
     });
 
@@ -353,7 +351,6 @@ const cspNonce = Astro.locals.cspNonce;
           .querySelectorAll(".icon.is-selected")
           .forEach((item) => item.classList.remove("is-selected"));
         document.body.classList.add("has-desktop-window-open");
-        shell.classList.remove("desktopWindow--fullscreen");
         shell.hidden = false;
         title.textContent = `${link.querySelector(".icon__label")?.textContent?.trim() || "window"}/`;
         iframe.style.opacity = "0";

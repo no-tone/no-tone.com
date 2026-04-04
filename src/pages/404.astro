@@ -19,7 +19,7 @@ const windowMode = Astro.url.searchParams.get("window") === "1";
     data-standalone-window={!windowMode ? "true" : undefined}
   >
     {!windowMode && <Header />}
-    <main class="note note--error" data-window-root data-window-name="404">
+    <main class="note note--error" data-window-root>
       <h1 class="page__title">404/</h1>
       <div class="note__content">
         <p>
