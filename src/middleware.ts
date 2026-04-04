@@ -9,6 +9,7 @@ const PERMISSIONS_POLICY = [
 	"payment=()",
 	"usb=()",
 	"bluetooth=()",
+	"picture-in-picture=(self)",
 ].join(', ');
 
 const generateNonce = (): string => {

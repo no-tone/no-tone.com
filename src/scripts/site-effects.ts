@@ -273,7 +273,8 @@ const initDesktopWindow = async (): Promise<void> => {
         applyThemeToIframe();
         gsap.to(iframe, { autoAlpha: 1, duration: 0.18, ease: "power2.out" });
       };
-      iframe.src = `${url.pathname}?window=1`;
+      url.searchParams.set("window", "1");
+      iframe.src = url.toString();
 
       const iconRect = link.getBoundingClientRect();
       const startWidth = 112;
@@ -312,6 +313,60 @@ const initDesktopWindow = async (): Promise<void> => {
   });
 };
 
+const resolveWindowModeHref = (anchor: HTMLAnchorElement): string | null => {
+  if (anchor.dataset.skipWindowMode === "true") return null;
+  if (anchor.hasAttribute("download")) return null;
+
+  const target = (anchor.getAttribute("target") ?? "").trim();
+  if (target && target !== "_self") return null;
+
+  const rawHref = anchor.getAttribute("href")?.trim() ?? "";
+  if (!rawHref || rawHref.startsWith("#")) return null;
+
+  let url: URL;
+  try {
+    url = new URL(anchor.href, window.location.href);
+  } catch {
+    return null;
+  }
+
+  if (url.origin !== window.location.origin) return null;
+  if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+
+  url.searchParams.set("window", "1");
+  return `${url.pathname}${url.search}${url.hash}`;
+};
+
+const initWindowModeLinkRouting = (): void => {
+  if (document.body?.dataset.windowMode !== "true") {
+    return;
+  }
+
+  const anchors = document.querySelectorAll<HTMLAnchorElement>("a[href]");
+  anchors.forEach((anchor) => {
+    const resolvedHref = resolveWindowModeHref(anchor);
+    if (resolvedHref) {
+      anchor.setAttribute("href", resolvedHref);
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (event.defaultPrevented) return;
+    if (!(event.target instanceof Element)) return;
+    if (event.button !== 0) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+    const anchor = event.target.closest("a[href]");
+    if (!(anchor instanceof HTMLAnchorElement)) return;
+
+    const resolvedHref = resolveWindowModeHref(anchor);
+    if (!resolvedHref) return;
+
+    event.preventDefault();
+    window.location.assign(resolvedHref);
+  });
+};
+
 const closeCurrentWindow = (button: HTMLButtonElement): void => {
   if (document.body?.dataset.standaloneWindow === "true") {
     void runStandaloneNavigation(button);
@@ -336,9 +391,12 @@ export const initSiteEffects = (): void => {
   const isWindowMode = document.body?.dataset.windowMode === "true";
 
   const boot = () => {
-    if (!isWindowMode) {
-      void initDesktopWindow();
+    if (isWindowMode) {
+      initWindowModeLinkRouting();
+      return;
     }
+
+    void initDesktopWindow();
   };
 
   if (document.readyState === "loading") {
@@ -348,3 +406,5 @@ export const initSiteEffects = (): void => {
 
   boot();
 };
+
+initSiteEffects();

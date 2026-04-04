@@ -3,11 +3,8 @@ import BaseHead from "../components/BaseHead.astro";
 import DesktopWindow from "../components/DesktopWindow.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
-import {
-  SITE_DESCRIPTION,
-  SITE_TITLE,
-  SITE_URL,
-} from "../consts";
+import SiteEffectsBootstrap from "../components/SiteEffectsBootstrap.astro";
+import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "../consts";
 const cspNonce = Astro.locals.cspNonce;
 const homeSchema = {
   "@context": "https://schema.org",
@@ -31,18 +28,13 @@ const homeSchema = {
       title={SITE_TITLE}
       description={SITE_DESCRIPTION}
       schema={homeSchema}
-      bootstrapSiteEffectsHead={true}
     />
   </head>
   <body>
     <Header />
     <section class="sr-only" aria-labelledby="home-title">
-      <h1 id="home-title">
-        projects, tldr, github, contact, desktop
-      </h1>
-      <h2>
-        desktop homepage for projects, tldr, github, and contact
-      </h2>
+      <h1 id="home-title">projects, tldr, github, contact, desktop</h1>
+      <h2>desktop homepage for projects, tldr, github, and contact</h2>
     </section>
     <main class="desktop" aria-label="Desktop">
       <a class="icon" data-icon="folder-projects" href="/projects">
@@ -91,6 +83,7 @@ const homeSchema = {
       </a>
     </main>
     <DesktopWindow />
+    <SiteEffectsBootstrap />
     <Footer />
 
     <script is:inline nonce={cspNonce}>

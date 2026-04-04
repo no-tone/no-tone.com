@@ -20,7 +20,6 @@ const windowMode = Astro.url.searchParams.get("window") === "1";
       title={title}
       description={description}
       image="/images/meta/og.png"
-      isStandalonePage={!windowMode}
     />
   </head>
   <body
