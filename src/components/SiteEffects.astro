@@ -1,11 +1,9 @@
 ---
-import gsapUrl from "gsap?url";
 const cspNonce = Astro.locals.cspNonce;
 ---
 
-<script is:inline nonce={cspNonce} define:vars={{ gsapUrl }}>
+<script is:inline nonce={cspNonce}>
   // @ts-nocheck
-  const GSAP_URL = gsapUrl;
 
   const computeWindowRect = () => {
     const width = Math.min(window.innerWidth - 40, 920);
@@ -18,14 +16,84 @@ const cspNonce = Astro.locals.cspNonce;
     };
   };
 
-  let gsapPromise;
-  const loadGsap = async () => {
-    if (!gsapPromise) {
-      gsapPromise = import(GSAP_URL).then(
-        (mod) => mod.gsap ?? mod.default ?? mod,
-      );
+  const applyStyles = (element, styles) => {
+    if (!(element instanceof HTMLElement)) return;
+    Object.assign(element.style, styles);
+  };
+
+  const animateElement = async (element, from, to, options = {}) => {
+    if (!(element instanceof HTMLElement)) {
+      return;
     }
-    return gsapPromise;
+
+    const animationOptions = {
+      duration: 220,
+      easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+      fill: "forwards",
+      ...options,
+    };
+
+    applyStyles(element, from);
+
+    if (typeof element.animate !== "function") {
+      applyStyles(element, to);
+      return;
+    }
+
+    const animation = element.animate([from, to], animationOptions);
+    try {
+      await animation.finished;
+    } catch {
+      // ignore cancelled animations
+    }
+    applyStyles(element, to);
+  };
+
+  const getElementRect = (element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+    };
+  };
+
+  const setRectStyles = (element, rect) => {
+    applyStyles(element, {
+      left: `${rect.left}px`,
+      top: `${rect.top}px`,
+      width: `${rect.width}px`,
+      height: `${rect.height}px`,
+    });
+  };
+
+  const animateFrameToRect = async (frame, rect, duration = 280) => {
+    const from = getElementRect(frame);
+    await animateElement(
+      frame,
+      {
+        left: `${from.left}px`,
+        top: `${from.top}px`,
+        width: `${from.width}px`,
+        height: `${from.height}px`,
+        opacity: "1",
+        transform: "translate3d(0, 0, 0) scale(1)",
+      },
+      {
+        left: `${rect.left}px`,
+        top: `${rect.top}px`,
+        width: `${rect.width}px`,
+        height: `${rect.height}px`,
+        opacity: "1",
+        transform: "translate3d(0, 0, 0) scale(1)",
+      },
+      {
+        duration,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+      },
+    );
+    setRectStyles(frame, rect);
   };
 
   const runStandaloneNavigation = async (button) => {
@@ -52,31 +120,28 @@ const cspNonce = Astro.locals.cspNonce;
     }
 
     document.body.dataset.windowClosing = "true";
-    const gsap = await loadGsap();
-
-    await new Promise((resolve) => {
-      gsap
-        .timeline({
-          defaults: { ease: "power2.inOut" },
-          onComplete: resolve,
-        })
-        .to(topbar, { autoAlpha: 0, y: -10, duration: 0.18 }, 0)
-        .to(
-          bottombar instanceof HTMLElement ? bottombar : {},
-          { autoAlpha: 0, y: 10, duration: 0.18 },
-          0,
-        )
-        .to(
-          windowRoot,
-          {
-            autoAlpha: 0,
-            y: 12,
-            scale: 0.965,
-            duration: 0.22,
-          },
-          0,
-        );
-    });
+    await Promise.all([
+      animateElement(
+        topbar,
+        { opacity: "1", transform: "translate3d(0, 0, 0)" },
+        { opacity: "0", transform: "translate3d(0, -10px, 0)" },
+        { duration: 180 },
+      ),
+      bottombar instanceof HTMLElement
+        ? animateElement(
+            bottombar,
+            { opacity: "1", transform: "translate3d(0, 0, 0)" },
+            { opacity: "0", transform: "translate3d(0, 10px, 0)" },
+            { duration: 180 },
+          )
+        : Promise.resolve(),
+      animateElement(
+        windowRoot,
+        { opacity: "1", transform: "translate3d(0, 0, 0) scale(1)" },
+        { opacity: "0", transform: "translate3d(0, 12px, 0) scale(0.965)" },
+        { duration: 220 },
+      ),
+    ]);
 
     delete document.body.dataset.windowClosing;
     if (goBack) {
@@ -184,19 +249,10 @@ const cspNonce = Astro.locals.cspNonce;
     });
 
     const animateToRect = async (rect) => {
-      const gsap = await loadGsap();
-      gsap.to(frame, {
-        left: rect.left,
-        top: rect.top,
-        width: rect.width,
-        height: rect.height,
-        duration: 0.28,
-        ease: "power3.inOut",
-      });
+      await animateFrameToRect(frame, rect, 280);
     };
 
     const closeShell = async () => {
-      const gsap = await loadGsap();
       if (!(activeIcon instanceof HTMLAnchorElement)) {
         shell.hidden = true;
         iframe.src = "about:blank";
@@ -211,33 +267,52 @@ const cspNonce = Astro.locals.cspNonce;
       const targetLeft = iconRect.left + iconRect.width / 2 - startWidth / 2;
       const targetTop = iconRect.top + iconRect.height / 2 - startHeight / 2;
 
-      gsap
-        .timeline({
-          defaults: { ease: "expo.inOut" },
-          onComplete: () => {
-            shell.hidden = true;
-            shell.classList.remove("desktopWindow--fullscreen");
-            iframe.src = "about:blank";
-            document.body.classList.remove("has-desktop-window-open");
-            activeIcon = null;
-            isFullscreen = false;
-          },
-        })
-        .to(backdrop, { autoAlpha: 0, duration: 0.18 }, 0)
-        .to(iframe, { autoAlpha: 0, duration: 0.14 }, 0)
-        .to(
+      const current = getElementRect(frame);
+
+      await Promise.all([
+        animateElement(
+          backdrop,
+          { opacity: "1" },
+          { opacity: "0" },
+          { duration: 180 },
+        ),
+        animateElement(
+          iframe,
+          { opacity: "1" },
+          { opacity: "0" },
+          { duration: 140 },
+        ),
+        animateElement(
           frame,
           {
-            left: targetLeft,
-            top: targetTop,
-            width: startWidth,
-            height: startHeight,
-            opacity: 0.18,
-            scale: 0.74,
-            duration: 0.42,
+            left: `${current.left}px`,
+            top: `${current.top}px`,
+            width: `${current.width}px`,
+            height: `${current.height}px`,
+            opacity: "1",
+            transform: "translate3d(0, 0, 0) scale(1)",
           },
-          0,
-        );
+          {
+            left: `${targetLeft}px`,
+            top: `${targetTop}px`,
+            width: `${startWidth}px`,
+            height: `${startHeight}px`,
+            opacity: "0.18",
+            transform: "translate3d(0, 0, 0) scale(0.74)",
+          },
+          {
+            duration: 420,
+            easing: "cubic-bezier(0.19, 1, 0.22, 1)",
+          },
+        ),
+      ]);
+
+      shell.hidden = true;
+      shell.classList.remove("desktopWindow--fullscreen");
+      iframe.src = "about:blank";
+      document.body.classList.remove("has-desktop-window-open");
+      activeIcon = null;
+      isFullscreen = false;
     };
 
     closeButton.addEventListener("click", () => {
@@ -285,16 +360,12 @@ const cspNonce = Astro.locals.cspNonce;
 
         iframe.onload = async () => {
           applyThemeToIframe();
-          try {
-            const iframeGsap = await loadGsap();
-            iframeGsap.to(iframe, {
-              autoAlpha: 1,
-              duration: 0.18,
-              ease: "power2.out",
-            });
-          } catch {
-            iframe.style.opacity = "1";
-          }
+          await animateElement(
+            iframe,
+            { opacity: "0" },
+            { opacity: "1" },
+            { duration: 180 },
+          );
         };
         url.searchParams.set("window", "1");
         iframe.src = url.toString();
@@ -306,48 +377,49 @@ const cspNonce = Astro.locals.cspNonce;
         const startTop = iconRect.top + iconRect.height / 2 - startHeight / 2;
         const finalRect = getNormalRect();
 
-        let gsap = null;
-        try {
-          gsap = await loadGsap();
-        } catch {
-          // Fall back to immediate open if animation library fails.
-        }
-
-        if (!gsap) {
-          frame.style.left = `${finalRect.left}px`;
-          frame.style.top = `${finalRect.top}px`;
-          frame.style.width = `${finalRect.width}px`;
-          frame.style.height = `${finalRect.height}px`;
-          frame.style.opacity = "1";
-          return;
-        }
-
-        gsap.killTweensOf([backdrop, frame, iframe]);
-        gsap.set(backdrop, { autoAlpha: 0 });
-        gsap.set(frame, {
-          left: startLeft,
-          top: startTop,
-          width: startWidth,
-          height: startHeight,
-          opacity: 0.2,
-          scale: 1,
+        applyStyles(backdrop, { opacity: "0" });
+        applyStyles(frame, {
+          left: `${startLeft}px`,
+          top: `${startTop}px`,
+          width: `${startWidth}px`,
+          height: `${startHeight}px`,
+          opacity: "0.2",
+          transform: "translate3d(0, 0, 0) scale(1)",
         });
 
-        gsap
-          .timeline({ defaults: { ease: "expo.inOut" } })
-          .to(backdrop, { autoAlpha: 1, duration: 0.24 }, 0)
-          .to(
+        await Promise.all([
+          animateElement(
+            backdrop,
+            { opacity: "0" },
+            { opacity: "1" },
+            { duration: 240 },
+          ),
+          animateElement(
             frame,
             {
-              left: finalRect.left,
-              top: finalRect.top,
-              width: finalRect.width,
-              height: finalRect.height,
-              opacity: 1,
-              duration: 0.38,
+              left: `${startLeft}px`,
+              top: `${startTop}px`,
+              width: `${startWidth}px`,
+              height: `${startHeight}px`,
+              opacity: "0.2",
+              transform: "translate3d(0, 0, 0) scale(1)",
             },
-            0,
-          );
+            {
+              left: `${finalRect.left}px`,
+              top: `${finalRect.top}px`,
+              width: `${finalRect.width}px`,
+              height: `${finalRect.height}px`,
+              opacity: "1",
+              transform: "translate3d(0, 0, 0) scale(1)",
+            },
+            {
+              duration: 380,
+              easing: "cubic-bezier(0.19, 1, 0.22, 1)",
+            },
+          ),
+        ]);
+
+        setRectStyles(frame, finalRect);
       });
     });
   };

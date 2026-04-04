@@ -98,8 +98,11 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 	}
 
 	const csp = directives.join('; ');
+	const reportOnlyCsp = directives
+		.filter((directive) => directive !== 'upgrade-insecure-requests')
+		.join('; ');
 
 	response.headers.set(CSP_HEADER, csp);
-	response.headers.set('Content-Security-Policy-Report-Only', csp);
+	response.headers.set('Content-Security-Policy-Report-Only', reportOnlyCsp);
 	return response;
 };
