@@ -1,6 +1,9 @@
 ---
-import siteEffectsUrl from "../scripts/site-effects.ts?url";
-const cspNonce = Astro.locals.cspNonce;
+
 ---
 
-<script type="module" nonce={cspNonce} src={siteEffectsUrl}></script>
+<script>
+  import { initSiteEffects } from "../scripts/site-effects";
+
+  initSiteEffects();
+</script>

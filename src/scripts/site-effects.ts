@@ -406,5 +406,3 @@ export const initSiteEffects = (): void => {
 
   boot();
 };
-
-initSiteEffects();
