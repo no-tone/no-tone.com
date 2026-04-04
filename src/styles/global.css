@@ -691,6 +691,8 @@ body[data-window-mode="true"] .projects__panel {
 
 [data-window-root] {
   will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .homeIntro {
@@ -907,6 +909,8 @@ body[data-window-mode="true"] .projects__panel {
   box-shadow:
     0 0 0 1px var(--bg),
     14px 14px 0 rgba(0, 0, 0, 0.12);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 .desktopWindow__titlebar {
@@ -969,6 +973,16 @@ body[data-window-mode="true"] .projects__panel {
   flex: 1 1 auto;
   min-height: 0;
   background: var(--bg);
+  position: relative;
+}
+
+.desktopWindow__frame[data-loading="true"] .desktopWindow__viewport::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  opacity: 0.96;
+  pointer-events: none;
 }
 
 .desktopWindow__iframe {
@@ -977,6 +991,9 @@ body[data-window-mode="true"] .projects__panel {
   border: none;
   display: block;
   background: var(--bg);
+  will-change: opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .desktopWindow__frame,

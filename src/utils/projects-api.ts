@@ -1,5 +1,3 @@
-const RATE_LIMIT_CACHE_PREFIX = 'https://rate-limit.no-tone.internal/projects';
-
 export interface GithubRepo {
 	name?: string;
 	html_url?: string;
@@ -51,30 +49,4 @@ export const simplifyRepos = (repos: unknown): SimplifiedRepo[] => {
 			forks: typeof repo.forks_count === 'number' ? repo.forks_count : 0,
 			updatedAt: repo.updated_at ? String(repo.updated_at) : '',
 		}));
-};
-
-export const getRateLimitWindowStart = (
-	nowMs: number,
-	windowMs: number,
-): number => Math.floor(nowMs / windowMs) * windowMs;
-
-export const getRateLimitResetAt = (
-	nowMs: number,
-	windowMs: number,
-): number => getRateLimitWindowStart(nowMs, windowMs) + windowMs;
-
-export const buildRateLimitCacheRequest = (
-	clientKey: string,
-	nowMs: number,
-	windowMs: number,
-): Request => {
-	const windowStart = getRateLimitWindowStart(nowMs, windowMs);
-	return new Request(
-		`${RATE_LIMIT_CACHE_PREFIX}/${windowStart}/${encodeURIComponent(clientKey)}`,
-	);
-};
-
-export const parseRateLimitCount = (value: string): number => {
-	const parsed = Number(value);
-	return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 };

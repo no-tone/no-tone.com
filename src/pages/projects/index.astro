@@ -98,10 +98,8 @@ const cspNonce = Astro.locals.cspNonce;
       // @ts-nocheck
       (() => {
         const CACHE_KEY = "no-tone:projects-cache:v1";
-        const RETRY_DELAYS_MS = [250, 700];
 
-        const makeError = (message, retryable = false) =>
-          Object.assign(new Error(message), { retryable });
+        const makeError = (message) => new Error(message);
 
         const normalize = (value) =>
           String(value || "")
@@ -199,6 +197,37 @@ const cspNonce = Astro.locals.cspNonce;
           }
 
           return card;
+        };
+
+        const normalizeRepoShape = (repo) => {
+          const topics = Array.isArray(repo?.topics) ? repo.topics : [];
+          const stars =
+            typeof repo?.stars === "number"
+              ? repo.stars
+              : typeof repo?.stargazers_count === "number"
+                ? repo.stargazers_count
+                : 0;
+          const forks =
+            typeof repo?.forks === "number"
+              ? repo.forks
+              : typeof repo?.forks_count === "number"
+                ? repo.forks_count
+                : 0;
+
+          return {
+            name: String(repo?.name || ""),
+            url: String(repo?.url || repo?.html_url || ""),
+            homepage: repo?.homepage ? String(repo.homepage).trim() : "",
+            language: repo?.language ? String(repo.language) : "Other",
+            description: repo?.description ? String(repo.description) : "",
+            topics,
+            isFork: repo?.isFork === true || repo?.fork === true,
+            isArchived: repo?.isArchived === true || repo?.archived === true,
+            hasPages: repo?.hasPages === true || repo?.has_pages === true,
+            stars,
+            forks,
+            updatedAt: String(repo?.updatedAt || repo?.updated_at || ""),
+          };
         };
 
         const initProjectsPage = () => {
@@ -397,21 +426,27 @@ const cspNonce = Astro.locals.cspNonce;
           };
 
           const mapRepos = (raw) =>
-            raw.map((repo) => {
-              const topics = Array.isArray(repo.topics) ? repo.topics : [];
-              const homepage = String(repo.homepage || "").trim();
-              return {
-                ...repo,
-                __search: normalize(
-                  [repo.name, repo.description, repo.language, ...topics].join(
-                    " ",
+            raw
+              .map((repo) => normalizeRepoShape(repo))
+              .filter((repo) => repo.name && repo.url)
+              .map((repo) => {
+                const topics = Array.isArray(repo.topics) ? repo.topics : [];
+                const homepage = String(repo.homepage || "").trim();
+                return {
+                  ...repo,
+                  __search: normalize(
+                    [
+                      repo.name,
+                      repo.description,
+                      repo.language,
+                      ...topics,
+                    ].join(" "),
                   ),
-                ),
-                __hasPages:
-                  repo.hasPages === true || topics.includes("github-pages"),
-                __hasWebsite: noTone.isSafeExternalUrl(homepage) === true,
-              };
-            });
+                  __hasPages:
+                    repo.hasPages === true || topics.includes("github-pages"),
+                  __hasWebsite: noTone.isSafeExternalUrl(homepage) === true,
+                };
+              });
 
           const hydrate = (raw) => {
             state.repos = mapRepos(raw);
@@ -420,10 +455,56 @@ const cspNonce = Astro.locals.cspNonce;
             render();
           };
 
-          const sleep = (ms) =>
-            new Promise((resolve) => {
-              window.setTimeout(resolve, ms);
+          const fetchProjectsFromApi = async () => {
+            const res = await fetch(apiUrl, {
+              headers: { accept: "application/json" },
+              cache: "default",
             });
+            const statusBits = [];
+            const lastUpdated = res.headers.get("x-no-tone-last-updated");
+            const parsedUpdated = lastUpdated
+              ? Date.parse(lastUpdated)
+              : Number.NaN;
+            const cacheState = (
+              res.headers.get("x-no-tone-cache") || ""
+            ).toLowerCase();
+
+            if (Number.isFinite(parsedUpdated)) {
+              statusBits.push(`last updated: ${dateFmt.format(parsedUpdated)}`);
+            }
+            if (cacheState && cacheState !== "miss") {
+              statusBits.push(`source: ${cacheState}`);
+            }
+
+            const bodyText = await res.text();
+            let data = null;
+            if (bodyText) {
+              try {
+                data = JSON.parse(bodyText);
+              } catch {
+                if (!res.ok) {
+                  throw makeError(`failed to load (${res.status})`);
+                }
+                throw makeError("invalid response");
+              }
+            }
+
+            if (!res.ok) {
+              const message =
+                data && typeof data === "object" && "error" in data
+                  ? String(data.error || "failed to load")
+                  : `failed to load (${res.status})`;
+              throw makeError(message);
+            }
+
+            const raw = Array.isArray(data) ? data : [];
+
+            return {
+              raw,
+              lastUpdated,
+              statusText: statusBits.join(" · "),
+            };
+          };
 
           const load = async () => {
             const cached = readCache();
@@ -446,92 +527,10 @@ const cspNonce = Astro.locals.cspNonce;
             }
 
             try {
-              let lastError = null;
-
-              for (
-                let attempt = 0;
-                attempt <= RETRY_DELAYS_MS.length;
-                attempt += 1
-              ) {
-                try {
-                  const res = await fetch(apiUrl, {
-                    headers: { accept: "application/json" },
-                    cache: "default",
-                  });
-                  const statusBits = [];
-                  const lastUpdated = res.headers.get("x-no-tone-last-updated");
-                  const parsedUpdated = lastUpdated
-                    ? Date.parse(lastUpdated)
-                    : Number.NaN;
-                  const rlRemaining = res.headers.get("x-ratelimit-remaining");
-                  const rlLimit = res.headers.get("x-ratelimit-limit");
-                  const cacheState = (
-                    res.headers.get("x-no-tone-cache") || ""
-                  ).toLowerCase();
-
-                  if (Number.isFinite(parsedUpdated)) {
-                    statusBits.push(
-                      `last updated: ${dateFmt.format(parsedUpdated)}`,
-                    );
-                  }
-                  if (rlRemaining && rlLimit) {
-                    statusBits.push(`rate limit: ${rlRemaining}/${rlLimit}`);
-                  }
-
-                  const bodyText = await res.text();
-                  let data = null;
-                  if (bodyText) {
-                    try {
-                      data = JSON.parse(bodyText);
-                    } catch {
-                      if (!res.ok) {
-                        throw makeError(`failed to load (${res.status})`);
-                      }
-                      throw makeError("invalid response");
-                    }
-                  }
-
-                  if (!res.ok) {
-                    const message =
-                      data && typeof data === "object" && "error" in data
-                        ? String(data.error || "failed to load")
-                        : `failed to load (${res.status})`;
-                    throw makeError(message);
-                  }
-
-                  if (cacheState === "empty-fallback") {
-                    throw makeError("projects temporarily unavailable", true);
-                  }
-
-                  const raw = Array.isArray(data) ? data : [];
-                  if (!raw.length) {
-                    throw makeError("no projects found");
-                  }
-
-                  writeCache(raw, lastUpdated || "");
-                  statusEl.textContent = statusBits.join(" · ");
-                  hydrate(raw);
-                  return;
-                } catch (error) {
-                  lastError = error;
-                  const retryable =
-                    (error &&
-                      typeof error === "object" &&
-                      "retryable" in error &&
-                      error.retryable === true) ||
-                    error instanceof TypeError;
-
-                  if (!retryable) {
-                    break;
-                  }
-
-                  if (attempt < RETRY_DELAYS_MS.length) {
-                    await sleep(RETRY_DELAYS_MS[attempt]);
-                  }
-                }
-              }
-
-              throw lastError || new Error("failed to load");
+              const fromApi = await fetchProjectsFromApi();
+              writeCache(fromApi.raw, fromApi.lastUpdated || "");
+              statusEl.textContent = fromApi.statusText;
+              hydrate(fromApi.raw);
             } catch (error) {
               if (cached) {
                 return;

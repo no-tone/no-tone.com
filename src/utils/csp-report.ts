@@ -14,6 +14,21 @@ type CspReportSummary = {
 	sourceFilePath: string | null;
 };
 
+const malformedSummary = (
+	reportPath: string,
+	size: number,
+): CspReportSummary => ({
+	path: reportPath,
+	size,
+	malformed: true,
+	disposition: null,
+	effectiveDirective: null,
+	violatedDirective: null,
+	blockedOrigin: null,
+	documentPath: null,
+	sourceFilePath: null,
+});
+
 const readString = (value: unknown): string | null => {
 	return typeof value === 'string' && value.trim() ? value.trim() : null;
 };
@@ -48,17 +63,7 @@ export const summarizeCspReport = (
 		const parsed = JSON.parse(body) as CspReportEnvelope;
 		const report = parsed?.['csp-report'];
 		if (!report || typeof report !== 'object') {
-			return {
-				path: reportPath,
-				size: body.length,
-				malformed: true,
-				disposition: null,
-				effectiveDirective: null,
-				violatedDirective: null,
-				blockedOrigin: null,
-				documentPath: null,
-				sourceFilePath: null,
-			};
+			return malformedSummary(reportPath, body.length);
 		}
 
 		return {
@@ -73,16 +78,6 @@ export const summarizeCspReport = (
 			sourceFilePath: sanitizePath(report['source-file']),
 		};
 	} catch {
-		return {
-			path: reportPath,
-			size: body.length,
-			malformed: true,
-			disposition: null,
-			effectiveDirective: null,
-			violatedDirective: null,
-			blockedOrigin: null,
-			documentPath: null,
-			sourceFilePath: null,
-		};
+		return malformedSummary(reportPath, body.length);
 	}
 };

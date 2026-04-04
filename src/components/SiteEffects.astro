@@ -184,6 +184,23 @@ const cspNonce = Astro.locals.cspNonce;
 
     let activeIcon = null;
     let isFullscreen = false;
+    let iframeLoadToken = 0;
+
+    const revealLoadedIframe = async () => {
+      await new Promise((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(resolve);
+        });
+      });
+      iframe.style.visibility = "visible";
+      await animateElement(
+        iframe,
+        { opacity: "0" },
+        { opacity: "1" },
+        { duration: 180 },
+      );
+      frame.dataset.loading = "false";
+    };
 
     const noTone = (window.noTone ??= {});
     const applyThemeToIframe = () => {
@@ -253,6 +270,12 @@ const cspNonce = Astro.locals.cspNonce;
     };
 
     const closeShell = async () => {
+      iframeLoadToken += 1;
+      iframe.onload = null;
+      frame.dataset.loading = "false";
+      iframe.style.opacity = "0";
+      iframe.style.visibility = "hidden";
+
       if (!(activeIcon instanceof HTMLAnchorElement)) {
         shell.hidden = true;
         iframe.src = "about:blank";
@@ -353,16 +376,17 @@ const cspNonce = Astro.locals.cspNonce;
         document.body.classList.add("has-desktop-window-open");
         shell.hidden = false;
         title.textContent = `${link.querySelector(".icon__label")?.textContent?.trim() || "window"}/`;
+        iframeLoadToken += 1;
+        const loadToken = iframeLoadToken;
+        frame.dataset.loading = "true";
+        iframe.onload = null;
         iframe.style.opacity = "0";
+        iframe.style.visibility = "hidden";
 
         iframe.onload = async () => {
+          if (loadToken !== iframeLoadToken) return;
           applyThemeToIframe();
-          await animateElement(
-            iframe,
-            { opacity: "0" },
-            { opacity: "1" },
-            { duration: 180 },
-          );
+          await revealLoadedIframe();
         };
         url.searchParams.set("window", "1");
         iframe.src = url.toString();
