@@ -511,6 +511,61 @@ const windowMode = Astro.url.searchParams.get("window") === "1";
           el.setAttribute(scopeAttr.name, scopeAttr.value ?? "");
         };
         let dynamicFolderId = 0;
+        const JOB_ENTRIES = [
+          {
+            name: "app-making-job/",
+            title: "application engineer",
+            description:
+              "Software company that develops digital solutions such as websites, online stores and applications, with integration of management systems to support digital transformation of businesses.",
+            bullets: [],
+            workType: "Hybrid",
+            duration: "feb. 2026 - present",
+          },
+          {
+            name: "public-sector-ai-project/",
+            title: "software engineer",
+            description:
+              "Project focused on applying Artificial Intelligence, NLP, Generative AI, and Data Science to optimize administrative processes and enhance digital governance in public administration.",
+            bullets: [
+              "Developing the chatbot avatar and voice interaction system, including speech-to-text translation, response integration, and realistic lip-synchronization for natural interactions between citizens and staff.",
+            ],
+            workType: "Remote",
+            duration: "sep. 2025 - jan. 2026",
+          },
+          {
+            name: "cloud-management-internship/",
+            title: "software engineering intern",
+            description:
+              "Cloud management solutions provider for the finance, HR, accounting, and retail sectors.",
+            bullets: [
+              "Built interactive intro sliders that reduced user onboarding time by 15%, leveraging best-in-class UX design principles for banking platform enhancements.",
+              "Directed the development of a web component designed for managing document elements within the company, as part of an evaluation project.",
+              "Implemented a new expression editor, leveraging feedback from users to continuously enhance its functionality and experience by conducting usability tests. Merged with the previous project.",
+            ],
+            workType: "Hybrid",
+            duration: "aug. 2024 - jul. 2025",
+          },
+        ];
+        const EDUCATION_ENTRIES = [
+          {
+            name: "masters-software-engineering/",
+            title: "master’s in software engineering",
+            period: "sep. 2025 - exp: jun. 2027",
+            highlights: [
+              "Software architecture, testing, and engineering practices.",
+              "Focus on building reliable systems end-to-end.",
+            ],
+          },
+          {
+            name: "bachelors-computer-science/",
+            title: "bachelor’s in computer science",
+            period: "sep. 2022 - jun. 2025",
+            highlights: [
+              "Core CS fundamentals (algorithms, data structures, systems).",
+              "Databases + web development foundations.",
+            ],
+          },
+        ];
 
         const getParts = (item) => {
           const children = item.querySelector(":scope > .tree__children");
@@ -584,43 +639,7 @@ const windowMode = Astro.url.searchParams.get("window") === "1";
         };
 
         const hydrateJobs = (container) => {
-          const jobs = [
-            {
-              name: "app-making-job/",
-              title: "application engineer",
-              description:
-                "Software company that develops digital solutions such as websites, online stores and applications, with integration of management systems to support digital transformation of businesses.",
-              bullets: [],
-              workType: "Hybrid",
-              duration: "feb. 2026 - present",
-            },
-            {
-              name: "public-sector-ai-project/",
-              title: "software engineer",
-              description:
-                "Project focused on applying Artificial Intelligence, NLP, Generative AI, and Data Science to optimize administrative processes and enhance digital governance in public administration.",
-              bullets: [
-                "Developing the chatbot avatar and voice interaction system, including speech-to-text translation, response integration, and realistic lip-synchronization for natural interactions between citizens and staff.",
-              ],
-              workType: "Remote",
-              duration: "sep. 2025 - jan. 2026",
-            },
-            {
-              name: "cloud-management-internship/",
-              title: "software engineering intern",
-              description:
-                "Cloud management solutions provider for the finance, HR, accounting, and retail sectors.",
-              bullets: [
-                "Built interactive intro sliders that reduced user onboarding time by 15%, leveraging best-in-class UX design principles for banking platform enhancements.",
-                "Directed the development of a web component designed for managing document elements within the company, as part of an evaluation project.",
-                "Implemented a new expression editor, leveraging feedback from users to continuously enhance its functionality and experience by conducting usability tests. Merged with the previous project.",
-              ],
-              workType: "Hybrid",
-              duration: "aug. 2024 - jul. 2025",
-            },
-          ];
-
-          hydrateEntries(container, jobs, (details, job) => {
+          hydrateEntries(container, JOB_ENTRIES, (details, job) => {
             appendFileLine(details, "job-title", job.title);
             appendFileLine(details, "job-description", job.description);
             job.bullets.forEach((bullet) => {
@@ -636,28 +655,7 @@ const windowMode = Astro.url.searchParams.get("window") === "1";
         };
 
         const hydrateEducation = (container) => {
-          const education = [
-            {
-              name: "masters-software-engineering/",
-              title: "master’s in software engineering",
-              period: "sep. 2025 - exp: jun. 2027",
-              highlights: [
-                "Software architecture, testing, and engineering practices.",
-                "Focus on building reliable systems end-to-end.",
-              ],
-            },
-            {
-              name: "bachelors-computer-science/",
-              title: "bachelor’s in computer science",
-              period: "sep. 2022 - jun. 2025",
-              highlights: [
-                "Core CS fundamentals (algorithms, data structures, systems).",
-                "Databases + web development foundations.",
-              ],
-            },
-          ];
-
-          hydrateEntries(container, education, (details, edu) => {
+          hydrateEntries(container, EDUCATION_ENTRIES, (details, edu) => {
             appendFileLine(details, "edu-title", edu.title);
             appendFileLine(details, "edu-meta", `period: ${edu.period}`);
             edu.highlights.forEach((h) => {
@@ -666,21 +664,21 @@ const windowMode = Astro.url.searchParams.get("window") === "1";
           });
         };
 
-        // Prefetch jobs on page load so the folder opens instantly
-        const jobsContainer = root.querySelector(
-          '.tree__children[data-kind="jobs"]',
-        );
-        if (jobsContainer instanceof HTMLElement) {
-          hydrateJobs(jobsContainer);
-        }
+        const hydrateByKind = (container) => {
+          if (!(container instanceof HTMLElement)) return;
+          const kind = container.dataset.kind;
+          if (kind === "jobs") {
+            hydrateJobs(container);
+            return;
+          }
+          if (kind === "education") {
+            hydrateEducation(container);
+          }
+        };
 
-        // Prefetch education on page load so the folder opens instantly
-        const educationContainer = root.querySelector(
-          '.tree__children[data-kind="education"]',
-        );
-        if (educationContainer instanceof HTMLElement) {
-          hydrateEducation(educationContainer);
-        }
+        root
+          .querySelectorAll(".tree__children[data-kind]")
+          .forEach((container) => hydrateByKind(container));
 
         const folders = root.querySelectorAll(".tree__item--folder");
         folders.forEach((item, index) => {
@@ -702,12 +700,7 @@ const windowMode = Astro.url.searchParams.get("window") === "1";
           if (!item) return;
 
           const children = getParts(item)?.children;
-          if (children && children.dataset.kind === "jobs") {
-            hydrateJobs(children);
-          }
-          if (children && children.dataset.kind === "education") {
-            hydrateEducation(children);
-          }
+          hydrateByKind(children);
 
           toggleFolder(item);
         });

@@ -124,14 +124,14 @@ const homeSchema = {
 
         const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
         const snap = (value) => Math.round(value / GRID) * GRID;
-        let snapToGrid = false;
-
-        snapToGrid = readStorage(SNAP_KEY) === "1";
+        let snapToGrid = readStorage(SNAP_KEY) === "1";
 
         const DEFAULTS = {
           "folder-projects": { xRatio: 0.5, yRatio: 0.4 },
           "folder-tldr": { xRatio: 0.2, yRatio: 0.18 },
+          "folder-usr": { xRatio: 0.79, yRatio: 0.2 },
         };
+        const FALLBACK_POSITION = { xRatio: 0.3, yRatio: 0.3 };
 
         const positions = { ...DEFAULTS, ...load() };
         const desktop = document.querySelector(".desktop");
@@ -189,29 +189,33 @@ const homeSchema = {
           maxY: Math.max(0, env.height - el.offsetHeight - SIDE_GUARD),
         });
 
+        const getBasePosition = (id) =>
+          positions[id] ?? DEFAULTS[id] ?? FALLBACK_POSITION;
+
+        const setPosition = (el, id, env, x, y) => {
+          const { maxX, maxY } = getBounds(env, el);
+          const nextX = clamp(x, SIDE_GUARD, maxX);
+          const nextY = clamp(y, TOP_GUARD, maxY);
+
+          positions[id] = {
+            xRatio: env.width ? nextX / env.width : 0,
+            yRatio: env.height ? nextY / env.height : 0,
+          };
+          el.style.transform = `translate3d(${nextX}px, ${nextY}px, 0)`;
+          return { x: nextX, y: nextY, maxX, maxY };
+        };
+
         const applyPosition = (el, env) => {
           const id = el.getAttribute("data-icon");
           if (!id) return;
-          const base = positions[id] ??
-            DEFAULTS[id] ?? { xRatio: 0.3, yRatio: 0.3 };
-          const width = env.width;
-          const height = env.height;
-          const iconWidth = el.offsetWidth;
-          const iconHeight = el.offsetHeight;
-          const maxX = Math.max(0, width - iconWidth - SIDE_GUARD);
-          const maxY = Math.max(0, height - iconHeight - SIDE_GUARD);
-
-          let x = base.xRatio * width;
-          let y = base.yRatio * height;
-
-          x = clamp(x, SIDE_GUARD, maxX);
-          y = clamp(y, TOP_GUARD, maxY);
-          positions[id] = {
-            xRatio: width ? x / width : base.xRatio,
-            yRatio: height ? y / height : base.yRatio,
-          };
-
-          el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+          const base = getBasePosition(id);
+          setPosition(
+            el,
+            id,
+            env,
+            base.xRatio * env.width,
+            base.yRatio * env.height,
+          );
         };
 
         const initialEnv = getEnvironment();
@@ -245,8 +249,7 @@ const homeSchema = {
             event.preventDefault();
 
             const env = getEnvironment();
-            const base = positions[id] ??
-              DEFAULTS[id] ?? { xRatio: 0.3, yRatio: 0.3 };
+            const base = getBasePosition(id);
             const start = {
               x: base.xRatio * env.width,
               y: base.yRatio * env.height,
@@ -267,10 +270,8 @@ const homeSchema = {
               const dy = clientY - startY;
               if (Math.abs(dx) + Math.abs(dy) > 6) moved = true;
 
-              const { maxX, maxY } = getBounds(env, el);
-
-              let nextX = clamp(start.x + dx, SIDE_GUARD, maxX);
-              let nextY = clamp(start.y + dy, TOP_GUARD, maxY);
+              let nextX = start.x + dx;
+              let nextY = start.y + dy;
 
               const iconRect = {
                 left: nextX,
@@ -298,13 +299,7 @@ const homeSchema = {
                 }
               }
 
-              nextX = clamp(nextX, SIDE_GUARD, maxX);
-              nextY = clamp(nextY, TOP_GUARD, maxY);
-              positions[id] = {
-                xRatio: env.width ? nextX / env.width : 0,
-                yRatio: env.height ? nextY / env.height : 0,
-              };
-              el.style.transform = `translate3d(${nextX}px, ${nextY}px, 0)`;
+              setPosition(el, id, env, nextX, nextY);
             };
 
             const onMove = (e) => {
@@ -325,22 +320,14 @@ const homeSchema = {
               }
 
               if (snapToGrid) {
-                const { maxX, maxY } = getBounds(env, el);
-                const snappedX = clamp(
-                  snap((positions[id]?.xRatio ?? 0) * env.width),
-                  SIDE_GUARD,
-                  maxX,
+                const next = positions[id] ?? FALLBACK_POSITION;
+                setPosition(
+                  el,
+                  id,
+                  env,
+                  snap(next.xRatio * env.width),
+                  snap(next.yRatio * env.height),
                 );
-                const snappedY = clamp(
-                  snap((positions[id]?.yRatio ?? 0) * env.height),
-                  TOP_GUARD,
-                  maxY,
-                );
-                positions[id] = {
-                  xRatio: env.width ? snappedX / env.width : 0,
-                  yRatio: env.height ? snappedY / env.height : 0,
-                };
-                el.style.transform = `translate3d(${snappedX}px, ${snappedY}px, 0)`;
               }
 
               el.classList.remove("is-dragging");
@@ -352,11 +339,10 @@ const homeSchema = {
               // Prevent accidental navigation after drag
               if (moved) {
                 el.dataset.skipWindowAnimation = "true";
-                const href = el.getAttribute("href");
                 el.addEventListener(
                   "click",
                   (e) => {
-                    if (href) e.preventDefault();
+                    e.preventDefault();
                     window.setTimeout(() => {
                       delete el.dataset.skipWindowAnimation;
                     }, 0);

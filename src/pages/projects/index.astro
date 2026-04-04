@@ -271,29 +271,40 @@ const cspNonce = Astro.locals.cspNonce;
             day: "2-digit",
           });
 
+          const buildStatusText = (lastUpdated, extras = []) => {
+            const bits = [];
+            const parsedUpdated = lastUpdated
+              ? Date.parse(lastUpdated)
+              : Number.NaN;
+            if (Number.isFinite(parsedUpdated)) {
+              bits.push(`last updated: ${dateFmt.format(parsedUpdated)}`);
+            }
+            for (const extra of extras) {
+              if (extra) bits.push(extra);
+            }
+            return bits.join(" · ");
+          };
+
           const state = { repos: [] };
           let renderDebounceId;
           let hasBoundEvents = false;
 
           const readCache = () => {
             try {
-              const raw = localStorage.getItem(CACHE_KEY);
-              if (!raw) return null;
-              const parsed = JSON.parse(raw);
-              if (
-                parsed &&
-                typeof parsed === "object" &&
-                Array.isArray(parsed.repos) &&
-                parsed.repos.length > 0
-              ) {
-                return {
-                  repos: parsed.repos,
-                  lastUpdated:
-                    typeof parsed.lastUpdated === "string"
-                      ? parsed.lastUpdated
-                      : 0,
-                };
+              const parsed = JSON.parse(
+                localStorage.getItem(CACHE_KEY) || "null",
+              );
+              if (!parsed || typeof parsed !== "object") return null;
+              if (!Array.isArray(parsed.repos) || parsed.repos.length === 0) {
+                return null;
               }
+              return {
+                repos: parsed.repos,
+                lastUpdated:
+                  typeof parsed.lastUpdated === "string"
+                    ? parsed.lastUpdated
+                    : "",
+              };
             } catch {
               // no-op
             }
@@ -425,28 +436,28 @@ const cspNonce = Astro.locals.cspNonce;
             });
           };
 
-          const mapRepos = (raw) =>
-            raw
-              .map((repo) => normalizeRepoShape(repo))
-              .filter((repo) => repo.name && repo.url)
-              .map((repo) => {
-                const topics = Array.isArray(repo.topics) ? repo.topics : [];
-                const homepage = String(repo.homepage || "").trim();
-                return {
-                  ...repo,
-                  __search: normalize(
-                    [
-                      repo.name,
-                      repo.description,
-                      repo.language,
-                      ...topics,
-                    ].join(" "),
+          const mapRepos = (raw) => {
+            const mapped = [];
+            for (const source of raw) {
+              const repo = normalizeRepoShape(source);
+              if (!repo.name || !repo.url) continue;
+
+              const topics = Array.isArray(repo.topics) ? repo.topics : [];
+              const homepage = String(repo.homepage || "").trim();
+              mapped.push({
+                ...repo,
+                __search: normalize(
+                  [repo.name, repo.description, repo.language, ...topics].join(
+                    " ",
                   ),
-                  __hasPages:
-                    repo.hasPages === true || topics.includes("github-pages"),
-                  __hasWebsite: noTone.isSafeExternalUrl(homepage) === true,
-                };
+                ),
+                __hasPages:
+                  repo.hasPages === true || topics.includes("github-pages"),
+                __hasWebsite: noTone.isSafeExternalUrl(homepage) === true,
               });
+            }
+            return mapped;
+          };
 
           const hydrate = (raw) => {
             state.repos = mapRepos(raw);
@@ -460,21 +471,14 @@ const cspNonce = Astro.locals.cspNonce;
               headers: { accept: "application/json" },
               cache: "default",
             });
-            const statusBits = [];
             const lastUpdated = res.headers.get("x-no-tone-last-updated");
-            const parsedUpdated = lastUpdated
-              ? Date.parse(lastUpdated)
-              : Number.NaN;
             const cacheState = (
               res.headers.get("x-no-tone-cache") || ""
             ).toLowerCase();
-
-            if (Number.isFinite(parsedUpdated)) {
-              statusBits.push(`last updated: ${dateFmt.format(parsedUpdated)}`);
-            }
-            if (cacheState && cacheState !== "miss") {
-              statusBits.push(`source: ${cacheState}`);
-            }
+            const cacheSourceBit =
+              cacheState && cacheState !== "miss"
+                ? `source: ${cacheState}`
+                : "";
 
             const bodyText = await res.text();
             let data = null;
@@ -502,23 +506,19 @@ const cspNonce = Astro.locals.cspNonce;
             return {
               raw,
               lastUpdated,
-              statusText: statusBits.join(" · "),
+              statusText: buildStatusText(lastUpdated, [cacheSourceBit]),
             };
           };
 
           const load = async () => {
             const cached = readCache();
             if (cached) {
-              const statusBits = ["cached copy"];
-              const parsedUpdated = cached.lastUpdated
-                ? Date.parse(cached.lastUpdated)
-                : Number.NaN;
-              if (Number.isFinite(parsedUpdated)) {
-                statusBits.unshift(
-                  `last updated: ${dateFmt.format(parsedUpdated)}`,
-                );
-              }
-              statusEl.textContent = statusBits.join(" · ");
+              const showCachedBadge =
+                document.body?.dataset.windowMode !== "true";
+              statusEl.textContent = buildStatusText(
+                cached.lastUpdated,
+                showCachedBadge ? ["cached copy"] : [],
+              );
               hydrate(cached.repos);
             } else {
               listEl.textContent = "loading…";
