@@ -2,6 +2,9 @@ import type { MiddlewareHandler } from 'astro';
 
 const CSP_HEADER = 'Content-Security-Policy';
 const CSP_REPORT_PATH = '/api/csp-report';
+const DEV_HOSTNAME = 'dev.no-tone.com';
+const DEV_ROBOTS_TXT = 'User-agent: *\nDisallow: /\n';
+const DEV_ROBOTS_TAG = 'noindex, nofollow, noarchive, nosnippet';
 const PERMISSIONS_POLICY = [
 	"camera=()",
 	"microphone=()",
@@ -30,9 +33,24 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 		return Response.redirect(requestUrl.toString(), 301);
 	}
 
+	const isDevHost = requestUrl.hostname === DEV_HOSTNAME;
+	if (isDevHost && requestUrl.pathname === '/robots.txt') {
+		return new Response(DEV_ROBOTS_TXT, {
+			status: 200,
+			headers: {
+				'Content-Type': 'text/plain; charset=utf-8',
+				'Cache-Control': 'no-store',
+				'X-Robots-Tag': DEV_ROBOTS_TAG,
+			},
+		});
+	}
+
 	const downstreamResponse = await next();
 	const response = new Response(downstreamResponse.body, downstreamResponse);
 	response.headers.delete('Content-Security-Policy-Report-Only');
+	if (isDevHost) {
+		response.headers.set('X-Robots-Tag', DEV_ROBOTS_TAG);
+	}
 
 	// Optionally prevent caching of HTML responses that contain nonces
 	const contentType = response.headers.get('Content-Type') || '';
