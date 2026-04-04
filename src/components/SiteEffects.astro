@@ -337,12 +337,21 @@ const cspNonce = Astro.locals.cspNonce;
       isFullscreen = false;
     };
 
+    const handleEscapeClose = (event) => {
+      if (!(event instanceof KeyboardEvent)) return;
+      if (event.key !== "Escape") return;
+      if (shell.hidden) return;
+      event.preventDefault();
+      void closeShell();
+    };
+
     closeButton.addEventListener("click", () => {
       void closeShell();
     });
     backdrop.addEventListener("click", () => {
       void closeShell();
     });
+    window.addEventListener("keydown", handleEscapeClose);
 
     fullscreenButton.addEventListener("click", () => {
       if (shell.hidden) return;
@@ -386,6 +395,14 @@ const cspNonce = Astro.locals.cspNonce;
         iframe.onload = async () => {
           if (loadToken !== iframeLoadToken) return;
           applyThemeToIframe();
+          try {
+            iframe.contentWindow?.addEventListener(
+              "keydown",
+              handleEscapeClose,
+            );
+          } catch {
+            // ignore iframe keyboard binding issues
+          }
           if (frame.dataset.loading !== "true") {
             iframe.style.visibility = "visible";
             iframe.style.opacity = "1";
