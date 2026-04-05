@@ -97,7 +97,6 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 		scriptSrc,
 		styleSrc,
 		"img-src 'self' https: data:",
-		"manifest-src 'self'",
 		"font-src 'self' https: data:",
 		"connect-src 'self' https://api.github.com",
 		"frame-src 'self'",
