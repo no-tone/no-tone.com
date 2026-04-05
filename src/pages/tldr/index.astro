@@ -2,14 +2,12 @@
 import BaseHead from "../../components/BaseHead.astro";
 import Footer from "../../components/Footer.astro";
 import Header from "../../components/Header.astro";
-import NoteDate from "../../components/NoteDate.astro";
 import SiteEffects from "../../components/SiteEffects.astro";
 
 const title = "no-tone | tldr";
 const description =
   "A short introduction to no-tone: full-stack engineering, privacy, Cloudflare Workers, and current focus areas.";
 
-const cspNonce = Astro.locals.cspNonce;
 const windowMode = Astro.url.searchParams.get("window") === "1";
 ---
 
@@ -28,8 +26,6 @@ const windowMode = Astro.url.searchParams.get("window") === "1";
   >
     {!windowMode && <Header />}
     <main class="note" data-window-root>
-      <NoteDate nonce={cspNonce} />
-      <h1 class="page__title">tldr/</h1>
       <div class="note__content">
         <p>
           I’m an aspiring <strong>full-stack engineer</strong> focused on building

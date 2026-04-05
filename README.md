@@ -1,4 +1,4 @@
-# no-tone
+# no-tone.com
 
 Source code for my personal website [**no-tone**](https://no-tone.com).
 

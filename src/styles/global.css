@@ -914,10 +914,10 @@ body[data-window-mode="true"] .projects__panel {
 }
 
 .desktopWindow__titlebar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   padding: 10px 12px;
   border-bottom: 1px solid var(--desktop-border);
   background: var(--bg);
@@ -933,14 +933,24 @@ body[data-window-mode="true"] .projects__panel {
 
 .desktopWindow__title {
   min-width: 0;
+  justify-self: start;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   text-transform: lowercase;
 }
 
+.desktopWindow__date.note__date {
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .desktopWindow__actions {
   display: inline-flex;
+  justify-self: end;
   align-items: center;
   gap: 2px;
 }

@@ -2,12 +2,19 @@
 export interface Props {
   nonce?: string;
   ariaLabel?: string;
+  className?: string;
 }
 
-const { nonce, ariaLabel = "Current local time" } = Astro.props;
+const { nonce, ariaLabel = "Current local time", className = "" } = Astro.props;
+const combinedClassName = ["note__date", className].filter(Boolean).join(" ");
 ---
 
-<div class="note__date" aria-label={ariaLabel} role="status" aria-live="polite">
+<div
+  class={combinedClassName}
+  aria-label={ariaLabel}
+  role="status"
+  aria-live="polite"
+>
 </div>
 
 <script is:inline nonce={nonce}>

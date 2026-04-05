@@ -30,6 +30,8 @@
     "cf-typegen": "wrangler types",
     "check": "astro build && tsc && wrangler deploy --dry-run",
     "deploy": "wrangler deploy",
+    "deploy:dev": "CLOUDFLARE_ENV=dev astro build && wrangler deploy --env dev",
+    "deploy:prod": "astro build && wrangler deploy",
     "dev": "astro dev",
     "preview": "astro build && wrangler dev",
     "telemetry": "astro telemetry disable"

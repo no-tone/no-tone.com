@@ -2,7 +2,6 @@
 import BaseHead from "../../components/BaseHead.astro";
 import Footer from "../../components/Footer.astro";
 import Header from "../../components/Header.astro";
-import NoteDate from "../../components/NoteDate.astro";
 import SiteEffects from "../../components/SiteEffects.astro";
 
 const title = "no-tone | usr";
@@ -24,8 +23,6 @@ const windowMode = Astro.url.searchParams.get("window") === "1";
   >
     {!windowMode && <Header />}
     <main class="page" aria-label="File explorer" data-window-root>
-      <NoteDate nonce={cspNonce} />
-      <h1 class="page__title">usr/</h1>
       <ul class="tree" data-root>
         <li class="tree__item tree__item--folder" data-node="stack">
           <button class="tree__label" type="button">

@@ -1,14 +1,28 @@
 import { handle } from '@astrojs/cloudflare/handler';
 
-const PROJECTS_WARMUP_URL = 'https://no-tone.com/api/projects.json';
+const DEFAULT_SITE_ORIGIN = 'https://no-tone.com';
+
+const readSiteOrigin = (env: Env): string => {
+	const raw = (env as unknown as Record<string, unknown>).SITE_ORIGIN;
+	if (typeof raw !== 'string' || !raw.trim()) {
+		return DEFAULT_SITE_ORIGIN;
+	}
+	try {
+		const parsed = new URL(raw);
+		return parsed.origin;
+	} catch {
+		return DEFAULT_SITE_ORIGIN;
+	}
+};
 
 const warmProjectsCache = async (
 	env: Env,
 	ctx: ExecutionContext,
 ): Promise<void> => {
 	try {
+		const warmupUrl = new URL('/api/projects.json', readSiteOrigin(env)).toString();
 		const response = await handle(
-			new Request(PROJECTS_WARMUP_URL, {
+			new Request(warmupUrl, {
 				method: 'GET',
 				headers: {
 					accept: 'application/json',

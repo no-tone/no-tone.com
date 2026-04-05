@@ -6,6 +6,9 @@
   "triggers": {
     "crons": ["*/10 * * * *"]
   },
+  "vars": {
+    "SITE_ORIGIN": "https://no-tone.com"
+  },
   "workers_dev": false,
   "preview_urls": false,
   "assets": {
@@ -14,6 +17,14 @@
   },
   "observability": {
     "enabled": true
+  },
+  "env": {
+    "dev": {
+      "name": "no-tone-dev",
+      "vars": {
+        "SITE_ORIGIN": "https://dev.no-tone.com"
+      }
+    }
   },
   "upload_source_maps": true,
   "send_metrics": false

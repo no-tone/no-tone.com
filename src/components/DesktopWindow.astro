@@ -1,5 +1,12 @@
 ---
+import NoteDate from "./NoteDate.astro";
 import WindowLinks from "./WindowLinks.astro";
+
+export interface Props {
+  nonce?: string;
+}
+
+const { nonce } = Astro.props;
 ---
 
 <div class="desktopWindow" data-desktop-window hidden>
@@ -10,7 +17,13 @@ import WindowLinks from "./WindowLinks.astro";
     aria-label="Desktop window"
   >
     <header class="desktopWindow__titlebar">
-      <span class="desktopWindow__title" data-desktop-window-title>window/</span>
+      <span class="desktopWindow__title" data-desktop-window-title>window/</span
+      >
+      <NoteDate
+        nonce={nonce}
+        className="desktopWindow__date"
+        ariaLabel="Current local time"
+      />
       <div class="desktopWindow__actions">
         <button
           class="desktopWindow__action"
@@ -46,8 +59,7 @@ import WindowLinks from "./WindowLinks.astro";
         class="desktopWindow__iframe"
         title="Desktop window content"
         loading="eager"
-        data-desktop-window-iframe
-      ></iframe>
+        data-desktop-window-iframe></iframe>
     </div>
     <footer class="desktopWindow__footer">
       <WindowLinks className="desktopWindow__footerNav" />
