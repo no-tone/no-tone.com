@@ -97,7 +97,6 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 		scriptSrc,
 		styleSrc,
 		"img-src 'self' https: data:",
-		"manifest-src 'self'",
 		"font-src 'self' https: data:",
 		"connect-src 'self' https://api.github.com",
 		"frame-src 'self'",
@@ -115,11 +114,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 	}
 
 	const csp = directives.join('; ');
-	const reportOnlyCsp = directives
-		.filter((directive) => directive !== 'upgrade-insecure-requests')
-		.join('; ');
 
 	response.headers.set(CSP_HEADER, csp);
-	response.headers.set('Content-Security-Policy-Report-Only', reportOnlyCsp);
 	return response;
 };

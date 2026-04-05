@@ -230,6 +230,7 @@ const cspNonce = Astro.locals.cspNonce;
         };
 
         const initProjectsPage = () => {
+          const LOCAL_CACHE_TTL_MS = 5 * 60 * 1000;
           const root = document;
           const apiUrl = new URL("/api/projects.json", window.location.origin);
 
@@ -303,6 +304,11 @@ const cspNonce = Astro.locals.cspNonce;
                   typeof parsed.lastUpdated === "string"
                     ? parsed.lastUpdated
                     : "",
+                cachedAt:
+                  typeof parsed.cachedAt === "number" &&
+                  Number.isFinite(parsed.cachedAt)
+                    ? parsed.cachedAt
+                    : 0,
               };
             } catch {
               // no-op
@@ -519,6 +525,13 @@ const cspNonce = Astro.locals.cspNonce;
                 showCachedBadge ? ["cached copy"] : [],
               );
               hydrate(cached.repos);
+
+              if (
+                cached.cachedAt &&
+                Date.now() - cached.cachedAt < LOCAL_CACHE_TTL_MS
+              ) {
+                return;
+              }
             } else {
               listEl.textContent = "loading…";
               metaEl.textContent = "";
