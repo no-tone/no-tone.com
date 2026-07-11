@@ -10,6 +10,7 @@
    ============================================================ */
 
 const DEG = Math.PI / 180;
+import { DynCSS } from "./dynamic-css";
 
 type Vec3 = [number, number, number];
 type Ring = [number, number][]; // [lon, lat]
@@ -114,6 +115,7 @@ export class VireGlobe {
   private dragging = false;
   private raf: number | null = null;
   private readonly onResize: () => void;
+  private nodeSheet = new DynCSS();
   private w = 0;
   private h = 0;
   private R = 0;
@@ -158,8 +160,7 @@ export class VireGlobe {
 
   private bindDrag(): void {
     const c = this.canvas;
-    c.style.touchAction = "none";
-    c.style.cursor = "grab";
+    this.nodeSheet.set(".vk-canvas { touch-action: none; cursor: grab; }");
     let lx = 0;
     let ly = 0;
     c.addEventListener("pointerdown", (e) => {
@@ -172,7 +173,7 @@ export class VireGlobe {
       this.dragging = true;
       lx = e.clientX;
       ly = e.clientY;
-      c.style.cursor = "grabbing";
+      this.nodeSheet.set(".vk-canvas { touch-action: none; cursor: grabbing; }");
       try {
         c.setPointerCapture(e.pointerId);
       } catch {
@@ -188,7 +189,7 @@ export class VireGlobe {
     });
     const up = () => {
       this.dragging = false;
-      c.style.cursor = "grab";
+      this.nodeSheet.set(".vk-canvas { touch-action: none; cursor: grab; }");
     };
     c.addEventListener("pointerup", up);
     c.addEventListener("pointercancel", up);
@@ -262,12 +263,14 @@ export class VireGlobe {
       }
     }
 
+    // Position nodes via CSP-safe dynamic stylesheet
+    const nodeRules: string[] = [];
     for (const { n, p } of proj) {
       const front = p.z > -0.06;
       if (n.el) {
-        n.el.style.transform = `translate(-50%,-50%) translate(${p.x}px, ${p.y}px)`;
-        n.el.style.opacity = front ? "1" : "0";
-        n.el.style.pointerEvents = front ? "auto" : "none";
+        nodeRules.push(
+          `[data-node="${n.id}"] { transform: translate(-50%,-50%) translate(${p.x}px,${p.y}px); opacity: ${front ? 1 : 0}; pointer-events: ${front ? 'auto' : 'none'}; }`,
+        );
       }
       if (front) {
         ctx.beginPath();
@@ -285,6 +288,8 @@ export class VireGlobe {
         ctx.fill();
       }
     }
+
+    if (nodeRules.length) this.nodeSheet.set(nodeRules.join('\n'));
 
     if (!this.dragging) this.rot += this.autoSpeed;
   }

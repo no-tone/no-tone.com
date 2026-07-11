@@ -447,6 +447,17 @@
   color: var(--text-strong);
 }
 
+/* panel utility spacing (CSP-safe, no inline styles) */
+.vp__sub--stack { margin-top: 24px; }
+.vp__sub--infra { margin-top: 22px; }
+.vp__sub--langs { margin-top: 22px; }
+.vp__sub--edu   { margin-top: 22px; }
+.vp__sub--best  { margin-top: 26px; }
+.vp__muted--body { margin: 0; }
+.vp__contact--gap { margin-top: 22px; }
+.vp__skillset { margin-bottom: 16px; }
+.vp__langs { margin-bottom: 16px; }
+
 /* README prose */
 .prose {
   font-size: 15px;

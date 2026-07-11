@@ -36,7 +36,7 @@ export function buildAbout(lang: Lang): HTMLElement {
 
   const contact = h(
     "p",
-    { class: "vp__contact", style: "margin-top:22px" },
+    { class: "vp__contact vp__contact--gap" },
     `${t("getInTouch")}: `,
     h("a", { href: "mailto:msg@no-tone.com" }, "msg@no-tone.com"),
   );
@@ -47,11 +47,11 @@ export function buildAbout(lang: Lang): HTMLElement {
     lead,
     pron,
     h("p", {}, t("aboutP2")),
-    h("div", { class: "vp__sub", style: "margin-top:24px" }, t("stack")),
+    h("div", { class: "vp__sub vp__sub--stack" }, t("stack")),
     stackChips,
-    h("div", { class: "vp__sub", style: "margin-top:22px" }, t("infra")),
-    h("p", { class: "vp__muted", style: "margin:0" }, t("infraBody")),
-    h("div", { class: "vp__sub", style: "margin-top:22px" }, "languages used"),
+    h("div", { class: "vp__sub vp__sub--infra" }, t("infra")),
+    h("p", { class: "vp__muted vp__muted--body" }, t("infraBody")),
+    h("div", { class: "vp__sub vp__sub--langs" }, "languages used"),
     langsWrap,
     contact,
   );

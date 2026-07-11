@@ -48,7 +48,7 @@ export function buildCv(lang: Lang): HTMLElement {
       ),
     );
   }
-  expSection.appendChild(h("div", { class: "vp__sub", style: "margin-top:22px" }, t("education")));
+  expSection.appendChild(h("div", { class: "vp__sub vp__sub--edu" }, t("education")));
   for (const e of EDUCATION) {
     const bullets = h("ul", { class: "vp__expBullets" });
     for (const b of e.bullets) bullets.appendChild(h("li", {}, b));
@@ -70,12 +70,12 @@ export function buildCv(lang: Lang): HTMLElement {
   const aside = h("aside", {});
   for (const [k, arr] of Object.entries(SKILLS)) {
     aside.appendChild(
-      h("div", { style: "margin-bottom:16px" }, h("div", { class: "vp__skillk" }, k), chips(arr)),
+      h("div", { class: "vp__skillset" }, h("div", { class: "vp__skillk" }, k), chips(arr)),
     );
   }
   aside.appendChild(h("div", { class: "vp__skillk" }, t("langs")));
   const spoken = chips(SPOKEN);
-  spoken.style.marginBottom = "16px";
+  spoken.classList.add("vp__langs");
   aside.appendChild(spoken);
   aside.appendChild(h("div", { class: "vp__skillk" }, t("interests")));
   aside.appendChild(chips(INTERESTS));
@@ -85,7 +85,7 @@ export function buildCv(lang: Lang): HTMLElement {
     { class: "vp" },
     panelHead(t("curriculum"), t("cv")),
     h("p", { class: "vp__cvlead" }, t("cvLead")),
-    h("div", { class: "vp__sub", style: "margin-top:26px" }, t("bestAt")),
+    h("div", { class: "vp__sub vp__sub--best" }, t("bestAt")),
     best,
     h("div", { class: "vp__cv" }, expSection, aside),
   );
