@@ -6,20 +6,26 @@ export async function GET(context) {
   const pages = [
     {
       title: "projects",
-      description: "projects page",
+      description: "Software engineering projects, tools, and experiments — from ML desktop apps to data dashboards.",
       link: "/projects/",
       pubDate: now,
     },
     {
       title: "tldr",
-      description: "tldr page",
+      description: "Quick-read profile and summary — what I do, what I've built, and what I'm learning.",
       link: "/tldr/",
       pubDate: now,
     },
     {
       title: "usr",
-      description: "usr page",
+      description: "Directory-style reference page — projects, notes, and other artifacts organised for browsing.",
       link: "/usr/",
+      pubDate: now,
+    },
+    {
+      title: "cv",
+      description: "Curriculum vitae — experience, education, skills, and selected work history.",
+      link: "/cv/",
       pubDate: now,
     },
   ];

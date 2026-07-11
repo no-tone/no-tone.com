@@ -1,0 +1,123 @@
+/* ============================================================
+   no-tone desktop — DS component classes
+   Rebuilt as vanilla DOM; class names mirror Claude Design.
+   ============================================================ */
+
+.vire-btn {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.2;
+  letter-spacing: var(--ls-nav);
+  padding: var(--control-pad-y) var(--control-pad-x);
+  border: var(--bw) solid var(--border);
+  border-radius: var(--radius-0);
+  background: transparent;
+  color: var(--text-strong);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition:
+    var(--transition-border),
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+.vire-btn:hover {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  border-color: var(--accent);
+  text-decoration: none;
+}
+.vire-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
+}
+.vire-btn--primary:hover {
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.vire-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--ls-nav);
+  line-height: 1;
+  padding: 4px 8px;
+  border: var(--bw) solid var(--border);
+  border-radius: var(--radius-0);
+  color: var(--text-muted);
+  background: transparent;
+  text-transform: lowercase;
+}
+.vire-tag--accent {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.vire-input {
+  background: transparent;
+  color: var(--text-strong);
+  border: var(--bw) solid var(--border);
+  border-radius: var(--radius-0);
+  padding: var(--control-pad-y) var(--control-pad-x);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.2;
+}
+.vire-input::placeholder {
+  color: var(--text-faint);
+}
+
+.vire-code {
+  border: var(--bw) solid var(--border);
+  border-radius: var(--radius-img);
+  background: var(--surface-code);
+  overflow: hidden;
+  max-width: 100%;
+  font-family: var(--font-mono);
+}
+.vire-code__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: var(--bw) solid var(--border);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+.vire-code__dot {
+  color: var(--accent);
+}
+.vire-code__body {
+  display: flex;
+  margin: 0;
+  padding: 14px 0;
+  overflow: auto;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+.vire-code__gutter {
+  flex: 0 0 auto;
+  text-align: right;
+  padding: 0 14px;
+  color: var(--text-faint);
+  user-select: none;
+  border-right: var(--bw) solid var(--border);
+}
+.vire-code__lines {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 16px;
+  white-space: pre;
+  color: var(--text);
+}
+.vire-code__gutter span,
+.vire-code__lines span {
+  display: block;
+}

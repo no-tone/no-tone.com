@@ -1,0 +1,364 @@
+/* ============================================================
+   no-tone desktop — shell chrome (globe, wordmark, rail, top/bottom
+   bars, themed cursor, click burst, theme crossfade)
+   ============================================================ */
+
+@media (pointer: fine) {
+  .vk,
+  .vk * {
+    cursor: none !important;
+  }
+}
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.vk {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+.vk-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 0;
+  display: block;
+}
+
+/* globe nodes (decorative overlay; the rail is the real nav) */
+.vk-nodes {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.vk-node {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  pointer-events: auto;
+  transition: opacity 0.25s ease;
+}
+.vk-node__label {
+  display: inline-block;
+  transform: translateY(30px);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  color: var(--chrome-fg);
+  background: var(--bg);
+  padding: 3px 8px;
+  border: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+.vk-node:hover .vk-node__label {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* wordmark — click toggles theme */
+.vk-word {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4.4vw, 58px);
+  color: var(--text-strong);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+.vk-word__globe {
+  display: inline-block;
+  width: 0.3em;
+  height: 0.3em;
+  border-radius: 50%;
+  margin-left: 0.07em;
+  border: 1px solid var(--accent);
+  background-color: transparent;
+  background-image: radial-gradient(currentColor 0.8px, transparent 0.9px);
+  background-size: 3px 3px;
+  color: var(--accent);
+  margin-top: 0.52em;
+}
+
+/* top chrome */
+.vk-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 22px 26px;
+  pointer-events: none;
+}
+.vk-top > * {
+  pointer-events: auto;
+}
+.vk-status {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  padding: 2px 6px;
+}
+.vk-status__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.vk-coord {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+  background: var(--bg);
+}
+.vk-coord b {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* left index rail + signature swatches */
+.vk-rail {
+  position: fixed;
+  left: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  pointer-events: auto;
+}
+.vk-rail__k {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 4px;
+}
+.vk-rail__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.vk-rail__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  width: fit-content;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px 0;
+  text-decoration: none;
+  text-transform: lowercase;
+  transition: color 0.12s ease;
+}
+.vk-rail__item:hover,
+.vk-rail__item.is-on,
+.vk-rail__item:focus-visible {
+  color: var(--text-strong);
+}
+.vk-rail__tick {
+  width: 14px;
+  height: 1px;
+  background: var(--border-strong);
+  transition:
+    width 0.16s ease,
+    background 0.16s ease;
+}
+.vk-rail__item:hover .vk-rail__tick,
+.vk-rail__item.is-on .vk-rail__tick,
+.vk-rail__item:focus-visible .vk-rail__tick {
+  width: 26px;
+  background: var(--accent);
+}
+.vk-rail__sig {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.vk-swatches {
+  display: flex;
+  gap: 7px;
+}
+.vk-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  padding: 0;
+}
+.vk-swatch.is-on {
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 3px #fff;
+}
+
+/* bottom chrome */
+.vk-bottom {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 26px calc(24px + var(--safe-b));
+  pointer-events: none;
+}
+.vk-bottom > * {
+  pointer-events: auto;
+}
+.vk-clock {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-muted);
+  background: var(--bg);
+  text-transform: lowercase;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.vk-clock b {
+  margin-left: 0.65ch;
+  color: var(--chrome-fg);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.vk-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  background: var(--bg);
+  padding: 2px 6px;
+}
+.vk-lang button {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.vk-lang button.is-on {
+  color: var(--accent);
+}
+.vk-lang span {
+  color: var(--text-faint);
+}
+
+/* themed arrow cursor (fine pointers only) */
+.vk-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: -2px 0 0 -3px; /* align the arrow tip with the hotspot */
+  pointer-events: none;
+  z-index: 3000;
+  opacity: 0;
+  will-change: transform;
+  transition: opacity 0.2s ease;
+}
+.vk-cursor svg {
+  display: block;
+  transition: transform 0.1s ease;
+}
+.vk-cursor svg path {
+  fill: var(--accent);
+  stroke: var(--bg);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+.vk-cursor.is-down svg {
+  transform: scale(0.82);
+}
+
+/* cartoon 3-line click burst */
+.vk-click {
+  position: fixed;
+  z-index: 2900;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.vk-click svg {
+  display: block;
+  transform-origin: center;
+  animation: vk-pop 0.4s ease-out forwards;
+}
+.vk-click line {
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+@keyframes vk-pop {
+  from {
+    transform: scale(0.45);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+@media (pointer: coarse) {
+  .vk-cursor,
+  .vk-click {
+    display: none;
+  }
+}
+
+/* smooth colour crossfade while toggling theme (no wipe flash) */
+html.vk-theming * {
+  transition:
+    background-color 0.5s ease,
+    color 0.5s ease,
+    border-color 0.5s ease,
+    box-shadow 0.5s ease,
+    fill 0.5s ease !important;
+}
+html.vk-theming .vk-canvas,
+html.vk-theming .vk-cursor,
+html.vk-theming .vk-cursor * {
+  transition: none !important;
+}

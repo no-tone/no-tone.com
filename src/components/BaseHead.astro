@@ -7,6 +7,12 @@ interface Props {
   description: string;
   image?: string;
   schema?: Record<string, unknown> | Array<Record<string, unknown>>;
+  /** Override the inlined stylesheet (defaults to the shared global.css). */
+  css?: string;
+  /** Override the viewport meta (e.g. to opt into safe-area insets). */
+  viewport?: string;
+  /** Emit the default JetBrains Mono font link. Off for pages that self-host. */
+  defaultFont?: boolean;
 }
 
 const {
@@ -14,7 +20,11 @@ const {
   description,
   image = "/images/meta/og.png",
   schema,
+  css,
+  viewport = "width=device-width,initial-scale=1",
+  defaultFont = true,
 } = Astro.props as Props;
+const styleCss = css ?? globalCss;
 const jbMonoFontUrl = import.meta.env.PUBLIC_JB_MONO_FONT_URL;
 const fontOrigin = jbMonoFontUrl ? new URL(jbMonoFontUrl).origin : null;
 const cspNonce = Astro.locals.cspNonce;
@@ -56,8 +66,9 @@ const resolvedSchema = [...defaultSchema, ...schemaItems];
 
 <!-- Global Metadata -->
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content={viewport} />
 <link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link
   rel="icon"
   type="image/png"
@@ -77,16 +88,16 @@ const resolvedSchema = [...defaultSchema, ...schemaItems];
 />
 <meta name="generator" content={Astro.generator} />
 <meta name="robots" content="index,follow" />
-<style nonce={cspNonce} set:html={globalCss}></style>
+<style nonce={cspNonce} set:html={styleCss}></style>
 <!-- Preconnect to Cloudflare Fonts origin -->
 {
-  fontOrigin && fontOrigin !== canonicalURL.origin && (
+  defaultFont && fontOrigin && fontOrigin !== canonicalURL.origin && (
     <link rel="preconnect" href={fontOrigin} crossorigin="anonymous" />
   )
 }
 
 <!-- Cloudflare Fonts (JetBrains Mono Variable) -->
-{jbMonoFontUrl && <link rel="stylesheet" href={jbMonoFontUrl} />}
+{defaultFont && jbMonoFontUrl && <link rel="stylesheet" href={jbMonoFontUrl} />}
 
 <!-- Theme bootstrap (runs before first paint) -->
 <script is:inline nonce={cspNonce}>

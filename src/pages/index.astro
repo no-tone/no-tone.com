@@ -1,11 +1,23 @@
 ---
 import BaseHead from "../components/BaseHead.astro";
-import DesktopWindow from "../components/DesktopWindow.astro";
-import Header from "../components/Header.astro";
-import Footer from "../components/Footer.astro";
-import SiteEffects from "../components/SiteEffects.astro";
 import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "../consts";
-const cspNonce = Astro.locals.cspNonce;
+// Design system, split into modules and concatenated so BaseHead can inline
+// it under the CSP nonce (a single same-origin <style>, no external sheet).
+import tokensCss from "../styles/desktop/tokens.css?inline";
+import baseCss from "../styles/desktop/base.css?inline";
+import componentsCss from "../styles/desktop/components.css?inline";
+import chromeCss from "../styles/desktop/chrome.css?inline";
+import panelsCss from "../styles/desktop/panels.css?inline";
+import responsiveCss from "../styles/desktop/responsive.css?inline";
+const desktopCss = [
+  tokensCss,
+  baseCss,
+  componentsCss,
+  chromeCss,
+  panelsCss,
+  responsiveCss,
+].join("\n");
+
 const homeSchema = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
@@ -15,368 +27,151 @@ const homeSchema = {
   about: [
     "projects",
     "GitHub repositories",
-    "software engineering notes",
+    "curriculum vitae",
+    "software engineering",
     "Cloudflare Workers",
   ],
 };
+
+// Globe / rail navigation. `panel` nodes open the slide-over drawer;
+// `link` nodes go external. Labels are set (and localized) client-side.
+const NODES = [
+  { id: "projects", label: "projects", type: "panel" },
+  { id: "cv", label: "cv", type: "panel" },
+  { id: "about", label: "about", type: "panel" },
+  { id: "contact", label: "contact", type: "link" },
+  { id: "github", label: "github", type: "link" },
+];
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <BaseHead
       title={SITE_TITLE}
       description={SITE_DESCRIPTION}
       schema={homeSchema}
+      css={desktopCss}
+      viewport="width=device-width, initial-scale=1, viewport-fit=cover"
+      defaultFont={false}
     />
+    <!-- Hanken Grotesk (UI/body) + Yeseva One (display). @font-face is in
+         the inlined (nonce'd) desktop CSS; only the woff2 files are fetched
+         (font-src https:), so nothing is committed and the CSP stays intact.
+         Cloudflare Fonts, if enabled, proxies gstatic to the origin. -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
   </head>
   <body>
-    <Header />
-    <section class="sr-only" aria-labelledby="home-title">
-      <h1 id="home-title">projects, tldr, github, contact, desktop</h1>
-      <h2>desktop homepage for projects, tldr, github, and contact</h2>
+    <!-- SEO / no-JS: the desktop is a canvas app, so expose the map in text. -->
+    <section class="sr-only">
+      <h1>no-tone — a desktop of tools, experiments and marks in the making</h1>
+      <p>
+        Navigate the globe or the index: projects, cv, about, contact and
+        github. no-tone is the workshop of a software engineer.
+      </p>
+      <ul>
+        <li><a href="https://github.com/no-tone">github</a></li>
+        <li><a href="mailto:msg@no-tone.com">contact — msg@no-tone.com</a></li>
+      </ul>
     </section>
-    <main class="desktop" aria-label="Desktop">
-      <a class="icon" data-icon="folder-projects" href="/projects">
-        <span class="icon__glyph" aria-hidden="true">
-          <img
-            src="/images/desktop/tldr.png"
-            alt="projects"
-            width="64"
-            height="64"
-            loading="eager"
-            fetchpriority="high"
-            decoding="async"
-          />
-        </span>
-        <span class="icon__label">projects</span>
-      </a>
 
-      <a class="icon" data-icon="folder-tldr" href="/tldr">
-        <span class="icon__glyph" aria-hidden="true">
-          <img
-            src="/images/desktop/projects.png"
-            alt="tldr"
-            width="64"
-            height="64"
-            loading="eager"
-            fetchpriority="high"
-            decoding="async"
-          />
-        </span>
-        <span class="icon__label">tldr</span>
-      </a>
+    <main class="vk" aria-label="no-tone desktop">
+      <canvas class="vk-canvas" id="vk-canvas" aria-hidden="true"></canvas>
 
-      <a class="icon" data-icon="folder-usr" href="/usr">
-        <span class="icon__glyph" aria-hidden="true">
-          <img
-            src="/images/desktop/usr.png"
-            alt="usr"
-            width="64"
-            height="64"
-            loading="eager"
-            fetchpriority="high"
-            decoding="async"
-          />
+      <!-- globe nodes: a decorative, non-focusable overlay (the rail below
+           is the real, keyboard-accessible nav), so aria-hidden here is safe -->
+      <div class="vk-nodes" id="vk-nodes" aria-hidden="true">
+        {
+          NODES.map((n) => (
+            <div class="vk-node" data-node={n.id} data-type={n.type}>
+              <span
+                class="vk-node__label"
+                data-i18n={n.id}
+                data-arrow={n.type === "link" ? "" : undefined}
+              >
+                {n.label}
+                {n.type === "link" ? " ↗" : ""}
+              </span>
+            </div>
+          ))
+        }
+      </div>
+
+      <!-- wordmark — click toggles theme -->
+      <button
+        class="vk-word"
+        id="vk-word"
+        type="button"
+        title="toggle theme"
+        aria-label="toggle theme"
+      >
+        no-tone<span class="vk-word__globe" aria-hidden="true"></span>
+      </button>
+
+      <!-- top chrome: coordinate readout + status -->
+      <div class="vk-top">
+        <div class="vk-coord" id="vk-coord" aria-hidden="true">
+          <div>X:<b id="vk-x">0000</b></div>
+          <div>Y:<b id="vk-y">0000</b></div>
+        </div>
+        <span class="vk-status">
+          <span class="vk-status__dot" aria-hidden="true"></span>
+          <span data-i18n="status">heads-down · building</span>
         </span>
-        <span class="icon__label">usr</span>
-      </a>
+      </div>
+
+      <!-- left index rail (mirrors globe nav) + signature swatches -->
+      <nav class="vk-rail" aria-label="index">
+        <span class="vk-rail__k" data-i18n="index">index</span>
+        <div class="vk-rail__nav">
+          {
+            NODES.map((n) => (
+              <button class="vk-rail__item" type="button" data-node={n.id} data-type={n.type}>
+                <span class="vk-rail__tick" aria-hidden="true" />
+                <span data-i18n={n.id} data-arrow={n.type === "link" ? "" : undefined}>
+                  {n.label}
+                  {n.type === "link" ? " ↗" : ""}
+                </span>
+              </button>
+            ))
+          }
+        </div>
+        <div class="vk-rail__sig">
+          <span class="vk-rail__k" data-i18n="signature">signature</span>
+          <div class="vk-swatches" id="vk-swatches"></div>
+        </div>
+      </nav>
+
+      <!-- bottom chrome: clocks + language toggle -->
+      <div class="vk-bottom">
+        <span class="vk-clock"
+          ><span data-i18n="cityLondon">london</span>
+          <b id="vk-clock-london">--:--</b></span
+        >
+        <div class="vk-lang" role="group" aria-label="language">
+          <button type="button" data-lang="en" class="is-on">en</button>
+          <span aria-hidden="true">/</span>
+          <button type="button" data-lang="pt">pt</button>
+        </div>
+        <span class="vk-clock"
+          ><span data-i18n="citySf">san francisco</span>
+          <b id="vk-clock-sf">--:--</b></span
+        >
+      </div>
+
+      <!-- slide-over drawer -->
+      <div class="vk-drawer" id="vk-drawer">
+        <div class="vk-backdrop" id="vk-backdrop"></div>
+        <div class="vk-sheet" role="dialog" aria-modal="true" aria-label="panel">
+          <button class="vk-close" id="vk-close" type="button" aria-label="close">×</button>
+          <div class="vk-sheet__body" id="vk-sheet-body"></div>
+          <button class="vk-btt" id="vk-btt" type="button" aria-label="back to top">↑</button>
+        </div>
+      </div>
     </main>
-    <DesktopWindow nonce={cspNonce} />
-    <SiteEffects />
-    <Footer />
 
-    <script is:inline nonce={cspNonce}>
-      (() => {
-        const STORAGE_KEY = "desktop:iconPositions:v2";
-        const SNAP_KEY = "desktop:snapToGrid";
-        const GRID = 24;
-
-        const icons = Array.from(document.querySelectorAll(".icon[data-icon]"));
-        if (!icons.length) return;
-
-        const readStorage = (key) => {
-          try {
-            return localStorage.getItem(key);
-          } catch {
-            return null;
-          }
-        };
-
-        const load = () => {
-          const raw = readStorage(STORAGE_KEY);
-          if (!raw) return {};
-          try {
-            const data = JSON.parse(raw);
-            return typeof data === "object" && data ? data : {};
-          } catch {
-            return {};
-          }
-        };
-
-        const save = (positions) => {
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(positions));
-          } catch {
-            // no-op
-          }
-        };
-
-        const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-        const snap = (value) => Math.round(value / GRID) * GRID;
-        let snapToGrid = readStorage(SNAP_KEY) === "1";
-
-        const DEFAULTS = {
-          "folder-projects": { xRatio: 0.5, yRatio: 0.4 },
-          "folder-tldr": { xRatio: 0.2, yRatio: 0.18 },
-          "folder-usr": { xRatio: 0.79, yRatio: 0.2 },
-        };
-        const FALLBACK_POSITION = { xRatio: 0.3, yRatio: 0.3 };
-
-        const positions = { ...DEFAULTS, ...load() };
-        const desktop = document.querySelector(".desktop");
-        const TOP_GUARD = 16;
-        const SIDE_GUARD = 16;
-
-        const getEnvironment = () => {
-          const desktopRect = desktop?.getBoundingClientRect();
-          const width = desktopRect?.width ?? window.innerWidth;
-          const height = desktopRect?.height ?? window.innerHeight;
-
-          const toDesktopRect = (rect) => {
-            if (!rect || !desktopRect) return null;
-            return {
-              left: rect.left - desktopRect.left,
-              top: rect.top - desktopRect.top,
-              right: rect.right - desktopRect.left,
-              bottom: rect.bottom - desktopRect.top,
-            };
-          };
-
-          const barriers = [];
-          const toggleEl = document.querySelector(".topbar__toggle");
-          const footerNavEl = document.querySelector(".bottombar__nav");
-
-          if (toggleEl) {
-            const r = toDesktopRect(toggleEl.getBoundingClientRect());
-            if (r) {
-              barriers.push({
-                left: r.left - 12,
-                top: r.top - 12,
-                right: r.right + 12,
-                bottom: r.bottom + 12,
-              });
-            }
-          }
-
-          if (footerNavEl) {
-            const r = toDesktopRect(footerNavEl.getBoundingClientRect());
-            if (r) {
-              barriers.push({
-                left: r.left - 16,
-                top: r.top - 16,
-                right: r.right + 16,
-                bottom: r.bottom + 16,
-              });
-            }
-          }
-
-          return { width, height, barriers };
-        };
-
-        const getBounds = (env, el) => ({
-          maxX: Math.max(0, env.width - el.offsetWidth - SIDE_GUARD),
-          maxY: Math.max(0, env.height - el.offsetHeight - SIDE_GUARD),
-        });
-
-        const getBasePosition = (id) =>
-          positions[id] ?? DEFAULTS[id] ?? FALLBACK_POSITION;
-
-        const setPosition = (el, id, env, x, y) => {
-          const { maxX, maxY } = getBounds(env, el);
-          const nextX = clamp(x, SIDE_GUARD, maxX);
-          const nextY = clamp(y, TOP_GUARD, maxY);
-
-          positions[id] = {
-            xRatio: env.width ? nextX / env.width : 0,
-            yRatio: env.height ? nextY / env.height : 0,
-          };
-          el.style.transform = `translate3d(${nextX}px, ${nextY}px, 0)`;
-          return { x: nextX, y: nextY, maxX, maxY };
-        };
-
-        const applyPosition = (el, env) => {
-          const id = el.getAttribute("data-icon");
-          if (!id) return;
-          const base = getBasePosition(id);
-          setPosition(
-            el,
-            id,
-            env,
-            base.xRatio * env.width,
-            base.yRatio * env.height,
-          );
-        };
-
-        const initialEnv = getEnvironment();
-        icons.forEach((el) => applyPosition(el, initialEnv));
-        if (desktop instanceof HTMLElement) {
-          desktop.classList.add("desktop--ready");
-        }
-
-        const select = (target) => {
-          icons.forEach((el) => {
-            el.classList.toggle("is-selected", target && el === target);
-          });
-        };
-
-        if (desktop) {
-          desktop.addEventListener("pointerdown", (event) => {
-            const target = event.target;
-            if (!(target instanceof Element)) return;
-            if (!target.closest(".icon")) {
-              select(null);
-            }
-          });
-        }
-
-        icons.forEach((el) => {
-          el.addEventListener("pointerdown", (event) => {
-            if (event.button !== 0) return;
-            const id = el.getAttribute("data-icon");
-            if (!id) return;
-
-            event.preventDefault();
-
-            const env = getEnvironment();
-            const base = getBasePosition(id);
-            const start = {
-              x: base.xRatio * env.width,
-              y: base.yRatio * env.height,
-            };
-            const startX = event.clientX;
-            const startY = event.clientY;
-            let moved = false;
-            let frameId = 0;
-            let latestPoint = { x: startX, y: startY };
-            select(el);
-
-            el.setPointerCapture(event.pointerId);
-            el.classList.add("is-dragging");
-            el.style.zIndex = "10";
-
-            const applyDrag = (clientX, clientY) => {
-              const dx = clientX - startX;
-              const dy = clientY - startY;
-              if (Math.abs(dx) + Math.abs(dy) > 6) moved = true;
-
-              let nextX = start.x + dx;
-              let nextY = start.y + dy;
-
-              const iconRect = {
-                left: nextX,
-                top: nextY,
-                right: nextX + el.offsetWidth,
-                bottom: nextY + el.offsetHeight,
-              };
-
-              for (const barrier of env.barriers) {
-                const intersects = !(
-                  iconRect.right < barrier.left ||
-                  iconRect.left > barrier.right ||
-                  iconRect.bottom < barrier.top ||
-                  iconRect.top > barrier.bottom
-                );
-
-                if (intersects) {
-                  const iconCenterX = (iconRect.left + iconRect.right) / 2;
-                  const barrierCenterX = (barrier.left + barrier.right) / 2;
-                  if (iconCenterX <= barrierCenterX) {
-                    nextX = barrier.left - el.offsetWidth - 8;
-                  } else {
-                    nextX = barrier.right + 8;
-                  }
-                }
-              }
-
-              setPosition(el, id, env, nextX, nextY);
-            };
-
-            const onMove = (e) => {
-              e.preventDefault();
-              latestPoint = { x: e.clientX, y: e.clientY };
-              if (frameId) return;
-              frameId = window.requestAnimationFrame(() => {
-                frameId = 0;
-                applyDrag(latestPoint.x, latestPoint.y);
-              });
-            };
-
-            const onUp = () => {
-              if (frameId) {
-                window.cancelAnimationFrame(frameId);
-                frameId = 0;
-                applyDrag(latestPoint.x, latestPoint.y);
-              }
-
-              if (snapToGrid) {
-                const next = positions[id] ?? FALLBACK_POSITION;
-                setPosition(
-                  el,
-                  id,
-                  env,
-                  snap(next.xRatio * env.width),
-                  snap(next.yRatio * env.height),
-                );
-              }
-
-              el.classList.remove("is-dragging");
-              el.style.zIndex = "";
-              save(positions);
-              window.removeEventListener("pointermove", onMove);
-              window.removeEventListener("pointerup", onUp);
-
-              // Prevent accidental navigation after drag
-              if (moved) {
-                el.dataset.skipWindowAnimation = "true";
-                el.addEventListener(
-                  "click",
-                  (e) => {
-                    e.preventDefault();
-                    window.setTimeout(() => {
-                      delete el.dataset.skipWindowAnimation;
-                    }, 0);
-                  },
-                  { once: true },
-                );
-              }
-            };
-
-            window.addEventListener("pointermove", onMove);
-            window.addEventListener("pointerup", onUp, { once: true });
-          });
-
-          el.addEventListener("click", () => {
-            select(el);
-          });
-        });
-
-        window.addEventListener("resize", () => {
-          const env = getEnvironment();
-          icons.forEach((el) => applyPosition(el, env));
-          save(positions);
-        });
-
-        window.addEventListener("keydown", (event) => {
-          if (!event.altKey || event.key.toLowerCase() !== "g") return;
-          snapToGrid = !snapToGrid;
-          try {
-            localStorage.setItem(SNAP_KEY, snapToGrid ? "1" : "0");
-          } catch {
-            // no-op
-          }
-        });
-      })();
+    <script>
+      import "../scripts/desktop/main";
     </script>
   </body>
 </html>

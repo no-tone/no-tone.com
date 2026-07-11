@@ -1,0 +1,162 @@
+/* ============================================================
+   no-tone desktop — tokens (fonts + colours + type/spacing/effects)
+   Token prefix (--vire-*) kept as shipped by Claude Design.
+
+   Fonts: @font-face lives here (this file is inlined under the CSP
+   nonce, so style-src is satisfied) and points at hosted woff2 that
+   load under `font-src 'self' https:`. No woff2 is committed; with
+   Cloudflare Fonts enabled the zone proxies gstatic to the origin.
+   ============================================================ */
+
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/hankengrotesk/v12/ieVn2YZDLWuGJpnzaiwFXS9tYtpd59CxCis4.woff2")
+    format("woff2");
+}
+@font-face {
+  font-family: "Yeseva One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/yesevaone/v24/OpNJno4ck8vc-xYpwWWxli1VWzfAw0Y.woff2")
+    format("woff2");
+}
+
+:root {
+  --vire-black: #000000;
+  --vire-ink-900: #050506;
+  --vire-ink-850: #0a0b0e;
+  --vire-ink-800: #0e0f13;
+  --vire-ink-700: #14161c;
+  --vire-ink-600: #1c1f28;
+  --vire-ink-500: #262a36;
+
+  --vire-white: #ffffff;
+  --vire-paper: #f7f7f5;
+  --vire-paper-2: #eceae4;
+
+  --vire-slate-rgb: 96, 115, 159;
+  --vire-slate-dark-rgb: 34, 41, 57;
+  --vire-slate-light-rgb: 229, 233, 240;
+  --vire-slate: rgb(var(--vire-slate-rgb));
+  --vire-slate-dark: rgb(var(--vire-slate-dark-rgb));
+  --vire-slate-light: rgb(var(--vire-slate-light-rgb));
+
+  --vire-paper-fg: #ece9e1;
+  --vire-paper-hi: #ffffff;
+  --vire-paper-tint: rgba(236, 233, 225, 0.12);
+
+  --sig-blue: #4d8dff;
+  --sig-green: #3ddc97;
+  --sig-violet: #b47cff;
+  --sig-coral: #ff3b6b;
+  --sig-orange: #ff5c00;
+  --vire-yellow: #f5c400;
+  --vire-yellow-tint: rgba(245, 196, 0, 0.16);
+
+  --vire-green: #4fb477;
+  --vire-red: #e5484d;
+
+  /* semantic — dark (default) */
+  --bg: var(--vire-black);
+  --surface: var(--vire-ink-850);
+  --surface-2: var(--vire-ink-700);
+  --surface-code: var(--vire-ink-800);
+
+  --text: #ffffff;
+  --text-strong: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.62);
+  --text-faint: rgba(255, 255, 255, 0.4);
+  --text-on-accent: #000000;
+
+  --border: rgba(255, 255, 255, 0.16);
+  --border-strong: rgba(255, 255, 255, 0.3);
+  --chrome-fg: #ffffff;
+
+  --accent: var(--vire-paper-fg);
+  --accent-hover: var(--vire-paper-hi);
+  --accent-tint: var(--vire-paper-tint);
+
+  --selection-bg: color-mix(in srgb, var(--accent) 34%, transparent);
+  --selection-border: var(--accent);
+  --focus-ring: var(--accent);
+  --scrollbar: var(--accent); /* scrollbar tracks the signature colour */
+
+  --shadow-window: 14px 14px 0 rgba(0, 0, 0, 0.55);
+
+  /* typography */
+  --font-sans:
+    "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Helvetica, Arial,
+    sans-serif;
+  --font-display: "Yeseva One", "Times New Roman", Georgia, serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  --font-body: var(--font-sans);
+  --font-ui: var(--font-sans);
+  --font-hero: var(--font-display);
+
+  --text-2xs: 12px;
+  --text-xs: 14px;
+  --text-sm: 16px;
+  --text-base: 18px;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-bold: 700;
+
+  --lh-tight: 1.2;
+  --lh-snug: 1.4;
+  --lh-body: 1.6;
+  --lh-ui: 1.6;
+
+  --ls-caps: 0.08em;
+  --ls-nav: 0.02em;
+
+  --control-pad-y: 10px;
+  --control-pad-x: 12px;
+
+  --radius-0: 0;
+  --radius-code: 2px;
+  --radius-img: 8px;
+  --radius-full: 999px;
+  --bw: 1px;
+  --bw-thick: 2px;
+  --ease: ease;
+  --dur-fast: 120ms;
+  --transition-border: border-color var(--dur-fast) var(--ease);
+  --img-pixelated: pixelated;
+
+  /* iOS safe-area inset, defaulted to 0 where unsupported */
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+
+/* semantic — light (opt-in via [data-theme="light"]) */
+html[data-theme="light"] {
+  --bg: var(--vire-paper);
+  --surface: #ffffff;
+  --surface-2: var(--vire-paper-2);
+  --surface-code: #ffffff;
+
+  --text: var(--vire-slate);
+  --text-strong: var(--vire-slate-dark);
+  --text-muted: rgba(34, 41, 57, 0.66);
+  --text-faint: rgba(34, 41, 57, 0.42);
+  --text-on-accent: #ffffff;
+  --accent: var(--vire-slate-dark);
+  --accent-hover: #000000;
+
+  --border: rgba(34, 41, 57, 0.2);
+  --border-strong: rgba(34, 41, 57, 0.55);
+  --chrome-fg: #010001;
+
+  --selection-bg: color-mix(in srgb, var(--accent) 26%, transparent);
+  --selection-border: var(--accent);
+  --focus-ring: var(--accent);
+  --scrollbar: var(--accent);
+
+  --shadow-window: 14px 14px 0 rgba(0, 0, 0, 0.12);
+}

@@ -1,0 +1,134 @@
+/* ============================================================
+   no-tone desktop — responsive / mobile
+   Phones get a bottom-anchored, centred chrome: wordmark up top,
+   the index rail + signature as centred rows above the clocks, and
+   full-width panels that scroll as one column.
+   ============================================================ */
+
+/* ---- tablet & phone ---------------------------------------- */
+@media (max-width: 820px) {
+  .vk-word {
+    font-size: clamp(26px, 7vw, 40px);
+    top: 16px;
+  }
+
+  /* pointer readout is meaningless on touch — hide it */
+  .vk-coord {
+    display: none;
+  }
+
+  /* rail -> centred, bottom-anchored, horizontal nav */
+  .vk-rail {
+    top: auto;
+    bottom: calc(58px + var(--safe-b));
+    left: 0;
+    right: 0;
+    transform: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+  }
+  .vk-rail > .vk-rail__k {
+    display: none;
+  }
+  .vk-rail__nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px 18px;
+  }
+  .vk-rail__tick {
+    display: none;
+  }
+  .vk-rail__item {
+    font-size: 15px;
+    padding: 6px 2px;
+    background: var(--bg);
+  }
+  .vk-rail__sig {
+    align-items: center;
+    gap: 0;
+  }
+  .vk-rail__sig .vk-rail__k {
+    display: none;
+  }
+  .vk-swatches {
+    padding: 4px 8px;
+    background: var(--bg);
+  }
+
+  /* bottom chrome -> centred single row */
+  .vk-bottom {
+    justify-content: center;
+    gap: 16px;
+    padding: 12px 16px calc(12px + var(--safe-b));
+    flex-wrap: wrap;
+  }
+
+  /* panels -> full width, single column, scroll as one */
+  .vk-sheet {
+    width: 100vw;
+    border-left: none;
+  }
+  .vp {
+    padding: 54px 20px 40px;
+  }
+  .vp__head {
+    padding-right: 40px;
+  }
+  .vp__title {
+    font-size: clamp(34px, 11vw, 46px);
+  }
+  .vp__split {
+    grid-template-columns: 1fr;
+    height: auto;
+    gap: 18px;
+  }
+  .vp__scroll {
+    max-height: 42vh;
+  }
+  .vp__detail {
+    overflow: visible;
+  }
+  .vp__cv,
+  .vp__about2,
+  .vp__best {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+  .vp__lead {
+    font-size: 20px;
+  }
+  .vk-node__label {
+    font-size: 12px;
+  }
+}
+
+/* ---- phone -------------------------------------------------- */
+@media (max-width: 560px) {
+  /* the status would sit on top of the centred wordmark — drop it */
+  .vk-status {
+    display: none;
+  }
+  .vk-word {
+    top: 14px;
+  }
+  .vk-bottom {
+    gap: 8px 16px;
+    font-size: 12px;
+  }
+  .vk-clock,
+  .vk-lang {
+    font-size: 12px;
+  }
+  .vp {
+    padding: 52px 16px 36px;
+  }
+  .vp__best {
+    gap: 2px 0;
+  }
+  .vk-btt {
+    right: 14px;
+  }
+}

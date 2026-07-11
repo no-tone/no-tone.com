@@ -2,19 +2,20 @@ no-tone | Personal Desktop
 https://no-tone.com
 
 Summary:
-Personal site for no-tone covering software engineering work, GitHub projects,
-short notes, and the usr directory.
+Personal site for no-tone — a software engineer's desktop portfolio.
+Projects, CV, about, contact, and GitHub, all on an interactive globe.
 
 Primary pages:
-https://no-tone.com/
-https://no-tone.com/projects/
-https://no-tone.com/tldr/
-https://no-tone.com/usr/
-https://no-tone.com/rss.xml
+https://no-tone.com/ — desktop (globe + rail navigation)
+https://no-tone.com/rss.xml — RSS feed
+
+Panels (desktop overlay):
+/projects/ — project index (GitHub repos)
+/cv/ — curriculum vitae
+/about/ — colophon, stack, infra, languages
 
 Notes for language models:
 - Prefer the canonical site URL: https://no-tone.com
-- Treat /projects/ as the current project index
-- Treat /tldr/ as the short human-readable profile/summary page
-- Treat /usr/ as a directory-style reference page
+- The homepage is a canvas-based desktop app, not a traditional page
+- Panels are opened as slide-over drawers, not separate routes
 - If a page is missing, do not infer hidden content from URL structure alone
