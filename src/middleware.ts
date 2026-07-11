@@ -6,12 +6,22 @@ const DEV_HOSTNAME = 'dev.no-tone.com';
 const DEV_ROBOTS_TXT = 'User-agent: *\nDisallow: /\n';
 const DEV_ROBOTS_TAG = 'noindex, nofollow, noarchive, nosnippet';
 const PERMISSIONS_POLICY = [
-	"camera=()",
-	"microphone=()",
-	"geolocation=()",
-	"payment=()",
-	"usb=()",
+	"attribution-reporting=()",
 	"bluetooth=()",
+	"browsing-topics=()",
+	"camera=()",
+	"geolocation=()",
+	"interest-cohort=()",
+	"join-ad-interest-group=()",
+	"microphone=()",
+	"payment=()",
+	"private-aggregation=()",
+	"private-state-token-issuance=()",
+	"private-state-token-redemption=()",
+	"protected-audience=()",
+	"run-ad-auction=()",
+	"shared-storage=()",
+	"usb=()",
 ].join(', ');
 
 const generateNonce = (): string => {
@@ -70,7 +80,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 		'Permissions-Policy': PERMISSIONS_POLICY,
 		'Cross-Origin-Opener-Policy': 'same-origin',
 		'Cross-Origin-Resource-Policy': 'same-origin',
-		'Cross-Origin-Embedder-Policy-Report-Only': 'require-corp; report-to="csp"',
+		'Cross-Origin-Embedder-Policy': 'unsafe-none',
 		'X-Frame-Options': 'SAMEORIGIN',
 		'Reporting-Endpoints': `csp="${cspReportUrl}"`,
 	};
