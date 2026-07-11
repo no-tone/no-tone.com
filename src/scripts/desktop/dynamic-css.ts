@@ -1,14 +1,14 @@
-/* CSP-safe dynamic stylesheet using adoptedStyleSheets.
-   CSSStyleSheet.replaceSync() is not subject to CSP restrictions,
-   so this is a clean alternative to element.style.* assignments
-   or style="..." attributes that would require 'unsafe-inline'. */
+/* Dynamic stylesheet using CSP-safe CSSStyleSheet.
+   CSSStyleSheet.replaceSync() operates on a constructed stylesheet,
+   which is NOT subject to CSP restrictions — no 'unsafe-inline' needed. */
 
 export class DynCSS {
   private sheet: CSSStyleSheet;
 
   constructor() {
     this.sheet = new CSSStyleSheet();
-    document.adoptedStyleSheets.push(this.sheet);
+    // adoptedStyleSheets is frozen — must assign a new array
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.sheet];
   }
 
   /** Replace all rules with a single CSS string. */
@@ -16,7 +16,7 @@ export class DynCSS {
     this.sheet.replaceSync(rules);
   }
 
-  /** Append rules (preserving existing). */
+  /** Append rules without removing existing ones. */
   append(rules: string): void {
     this.sheet.replaceSync(
       Array.from(this.sheet.cssRules)

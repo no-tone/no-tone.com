@@ -269,7 +269,7 @@ export class VireGlobe {
       const front = p.z > -0.06;
       if (n.el) {
         nodeRules.push(
-          `[data-node="${n.id}"] { transform: translate(-50%,-50%) translate(${p.x}px,${p.y}px); opacity: ${front ? 1 : 0}; pointer-events: ${front ? 'auto' : 'none'}; }`,
+          `.vk-node[data-node="${n.id}"] { transform: translate(-50%,-50%) translate(${p.x}px,${p.y}px); opacity: ${front ? 1 : 0}; pointer-events: ${front ? 'auto' : 'none'}; }`,
         );
       }
       if (front) {
