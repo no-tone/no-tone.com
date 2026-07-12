@@ -9,22 +9,26 @@ const DEV_ROBOTS_TAG = 'noindex, nofollow, noarchive, nosnippet';
 // ad-tech tokens like browsing-topics/attribution-reporting log "Unrecognized
 // feature" warnings and are dropped). Mirrors the edge Transform Rule so dev
 // and prod behave the same, and grants the untitled.stream embed its features.
+// Only browser-recognized Permissions-Policy features (the Privacy-Sandbox /
+// ad-tech tokens like browsing-topics/attribution-reporting log "Unrecognized
+// feature" warnings, so they're dropped). Mirrors the edge Transform Rule so
+// dev and prod behave the same.
 const PERMISSIONS_POLICY = [
 	'accelerometer=()',
-	'autoplay=(self "https://untitled.stream")',
+	'autoplay=()',
 	'camera=()',
 	'clipboard-read=()',
 	'clipboard-write=(self)',
 	'display-capture=()',
-	'encrypted-media=(self "https://untitled.stream")',
-	'fullscreen=(self "https://untitled.stream")',
+	'encrypted-media=()',
+	'fullscreen=(self)',
 	'geolocation=()',
 	'gyroscope=()',
 	'magnetometer=()',
 	'microphone=()',
 	'midi=()',
 	'payment=()',
-	'picture-in-picture=(self "https://untitled.stream")',
+	'picture-in-picture=()',
 	'publickey-credentials-get=()',
 	'screen-wake-lock=()',
 	'sync-xhr=()',
@@ -117,7 +121,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 		"img-src 'self' https: data:",
 		"font-src 'self' https: data:",
 		"connect-src 'self' https://api.github.com",
-		"frame-src 'self' https://untitled.stream https://*.untitled.stream",
+		"frame-src 'self'",
 		"frame-ancestors 'self'",
 		"base-uri 'none'",
 		"form-action 'self'",

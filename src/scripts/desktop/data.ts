@@ -53,7 +53,7 @@ export const STR: Record<Lang, Record<string, string>> = {
     infraBody: "cloudflare workers + wrangler · cloudflare pages. one smart network, close to users, close to data.",
     cvLead: "Application engineer — full-stack, security-minded, happiest shipping tools at the edge. Currently building digital products while pursuing an MSc in software engineering.",
     pronounce: "pronounced", cityLondon: "london", citySf: "san francisco",
-    onRepeat: "on repeat",
+    onRepeat: "on repeat", openPlayer: "open the player",
   },
   pt: {
     status: "em foco · a construir", index: "índice", signature: "assinatura",
@@ -71,7 +71,7 @@ export const STR: Record<Lang, Record<string, string>> = {
     infraBody: "cloudflare workers + wrangler · cloudflare pages. uma rede inteligente, perto dos utilizadores, perto dos dados.",
     cvLead: "Engenheiro de aplicações — full-stack, focado em segurança, mais feliz a lançar ferramentas na edge. Atualmente a construir produtos digitais enquanto faço um mestrado em engenharia de software.",
     pronounce: "pronuncia-se", cityLondon: "londres", citySf: "são francisco",
-    onRepeat: "em repetição",
+    onRepeat: "em repetição", openPlayer: "abrir o leitor",
   },
 };
 

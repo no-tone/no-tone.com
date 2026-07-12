@@ -57,18 +57,30 @@ export function buildAbout(lang: Lang): HTMLElement {
   );
 
 
+  // untitled.stream refuses external framing (X-Frame-Options: SAMEORIGIN +
+  // frame-ancestors 'none' on its embed URLs), so an <iframe> can't render.
+  // A link-out card is the honest, always-works alternative.
   const embed = h(
     "div",
     { class: "vp__embed" },
     h("div", { class: "vp__sub" }, t("onRepeat")),
-    h("iframe", {
-      class: "vp__embed-frame",
-      src: "https://untitled.stream/embed/xO9h0alF1WkD",
-      title: "untitled.stream player",
-      loading: "lazy",
-      referrerpolicy: "strict-origin-when-cross-origin",
-      allow: "autoplay; encrypted-media; picture-in-picture; clipboard-write; fullscreen",
-    }),
+    h(
+      "a",
+      {
+        class: "vp__player",
+        href: "https://untitled.stream/library/project/Y7ges7T8FiwyWmNhfqqQn",
+        target: "_blank",
+        rel: "noreferrer noopener",
+      },
+      h("span", { class: "vp__player-glyph", "aria-hidden": "true" }, "▶"),
+      h(
+        "span",
+        { class: "vp__player-body" },
+        h("span", { class: "vp__player-title" }, "untitled.stream"),
+        h("span", { class: "vp__player-sub" }, t("openPlayer")),
+      ),
+      h("span", { class: "vp__player-arrow", "aria-hidden": "true" }, "↗"),
+    ),
   );
 
   const right = h(
