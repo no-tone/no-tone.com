@@ -216,7 +216,7 @@
   font: inherit;
 }
 .vp__row:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--text) 4%, transparent);
 }
 .vp__row.is-sel {
   border-bottom-color: var(--accent);
@@ -555,7 +555,7 @@
 .prose code {
   font-family: var(--font-mono);
   font-size: 13px;
-  background: rgba(255, 255, 255, 0.07);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
   padding: 2px 5px;
   border-radius: 2px;
 }

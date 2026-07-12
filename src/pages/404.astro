@@ -1,3 +1,61 @@
 ---
-return Astro.redirect("/");
+import BaseHead from "../components/BaseHead.astro";
+import tokensCss from "../styles/desktop/tokens.css?inline";
+import baseCss from "../styles/desktop/base.css?inline";
+import componentsCss from "../styles/desktop/components.css?inline";
+
+
+const nf = `
+  html, body { height: auto; overflow: auto; }
+  .nf { min-height: 100dvh; display: grid; place-items: center; text-align: center; padding: 48px 20px; }
+  .nf__inner { max-width: 34rem; }
+  .nf__code { font-family: var(--font-display); font-size: clamp(76px, 20vw, 148px); color: var(--text-strong); line-height: 0.9; }
+  .nf__word {
+    display: inline-flex; align-items: center; margin-top: 6px;
+    font-family: var(--font-display); font-size: 20px; color: var(--text-muted); text-decoration: none;
+  }
+  .nf__word .dot {
+    width: 0.34em; height: 0.34em; margin-left: 0.08em; margin-top: 0.5em; border-radius: 50%;
+    border: 1px solid var(--accent);
+    background-image: radial-gradient(currentColor 0.8px, transparent 0.9px);
+    background-size: 3px 3px; color: var(--accent);
+  }
+  .nf__msg { color: var(--text-muted); font-size: 16px; line-height: 1.6; margin: 18px 0 26px; }
+  .nf__actions { display: inline-flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+`;
+const css = [tokensCss, baseCss, componentsCss, nf].join("\n");
+Astro.response.status = 404;
 ---
+
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <BaseHead
+      title="404 — no-tone"
+      description="This page doesn't exist on no-tone.com."
+      css={css}
+      defaultFont={false}
+    />
+    <link rel="preload" href="/fonts/hanken-grotesk-var.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href="/fonts/yeseva-400.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <meta name="robots" content="noindex, follow" />
+  </head>
+  <body>
+    <main class="nf">
+      <div class="nf__inner">
+        <div class="nf__code">404</div>
+        <a class="nf__word" href="/">no-tone<span class="dot" aria-hidden="true"></span></a>
+        <p class="nf__msg">this window doesn’t exist — the file may have moved, or never was.</p>
+        <div class="nf__actions">
+          <a class="vire-btn vire-btn--primary" href="/">back to the desktop</a>
+          <a
+            class="vire-btn"
+            href="https://github.com/no-tone"
+            target="_blank"
+            rel="noreferrer noopener">github ↗</a
+          >
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

@@ -108,12 +108,14 @@ export class VireGlobe {
   private rot = 2.6;
   private nodes: GlobeNode[] = [];
   private running = false;
+  private wantRun = false;
   private accent = "#ece9e1";
   private dpr: number;
   private optR: number;
   private dragging = false;
   private raf: number | null = null;
   private readonly onResize: () => void;
+  private readonly onVisibility: () => void;
   private detachDrag: (() => void) | null = null;
   private w = 0;
   private h = 0;
@@ -142,6 +144,17 @@ export class VireGlobe {
     this.dpr = Math.min(window.devicePixelRatio || 1, 2);
     this.onResize = () => this.resize();
     window.addEventListener("resize", this.onResize);
+
+    this.onVisibility = () => {
+      if (document.hidden) {
+        this.running = false;
+        if (this.raf) cancelAnimationFrame(this.raf);
+      } else if (this.wantRun && !this.running) {
+        this.running = true;
+        this.tick();
+      }
+    };
+    document.addEventListener("visibilitychange", this.onVisibility);
     this.bindDrag();
     this.resize();
     this.readAccent();
@@ -235,6 +248,7 @@ export class VireGlobe {
     ctx.clearRect(0, 0, this.w, this.h);
     const acc = this.accent;
 
+    ctx.fillStyle = acc;
     for (let i = 0; i < this.dots.length; i++) {
       const d = this.dots[i];
       const p = this.project(d.v);
@@ -249,11 +263,10 @@ export class VireGlobe {
         alpha = front ? 0.05 + depth * 0.07 : 0.02;
         size = 0.7;
       }
-      ctx.beginPath();
-      ctx.fillStyle = hexA(acc, alpha);
-      ctx.arc(p.x, p.y, size, 0, 6.2832);
-      ctx.fill();
+      ctx.globalAlpha = alpha;
+      ctx.fillRect(p.x - size, p.y - size, size * 2, size * 2);
     }
+    ctx.globalAlpha = 1;
 
     const proj = this.nodes.map((n) => ({ n, p: this.project(llToVec(n.lat, n.lon)) }));
     ctx.lineWidth = 1;
@@ -302,18 +315,21 @@ export class VireGlobe {
     if (!this.dragging) this.rot += this.autoSpeed;
   }
 
+  private tick = (): void => {
+    if (!this.running) return;
+    this.frame();
+    this.raf = requestAnimationFrame(this.tick);
+  };
+
   start(): void {
-    if (this.running) return;
+    this.wantRun = true;
+    if (this.running || document.hidden) return;
     this.running = true;
-    const loop = () => {
-      if (!this.running) return;
-      this.frame();
-      this.raf = requestAnimationFrame(loop);
-    };
-    loop();
+    this.tick();
   }
 
   stop(): void {
+    this.wantRun = false;
     this.running = false;
     if (this.raf) cancelAnimationFrame(this.raf);
   }
@@ -321,6 +337,7 @@ export class VireGlobe {
   destroy(): void {
     this.stop();
     window.removeEventListener("resize", this.onResize);
+    document.removeEventListener("visibilitychange", this.onVisibility);
     this.detachDrag?.();
   }
 }

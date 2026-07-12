@@ -2,14 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://no-tone.com/</loc>
-  </url>
-  <url>
-    <loc>https://no-tone.com/projects/</loc>
-  </url>
-  <url>
-    <loc>https://no-tone.com/tldr/</loc>
-  </url>
-  <url>
-    <loc>https://no-tone.com/usr/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
   </url>
 </urlset>

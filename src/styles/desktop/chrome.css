@@ -226,13 +226,13 @@ a {
   padding: 4px;
   background-clip: content-box;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid var(--border-strong);
   cursor: pointer;
 }
 .vk-swatch.is-on {
   box-shadow:
     0 0 0 2px var(--bg),
-    0 0 0 3px #fff;
+    0 0 0 3px var(--text-strong);
 }
 
 /* bottom chrome */
