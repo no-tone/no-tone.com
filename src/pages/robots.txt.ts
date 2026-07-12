@@ -25,11 +25,19 @@ export function GET({ url }: APIContext): Response {
 		});
 	}
 
-	return new Response(
-		`User-agent: *\nAllow: /\n\nSitemap: ${PROD_SITEMAP}\n`,
-		{
-			status: 200,
-			headers: buildHeaders('public, max-age=3600, s-maxage=3600'),
-		},
-	);
+	// Content Signals (contentsignals.org): findable in search and readable by
+	// agents answering questions, but not used to train models.
+	const body = [
+		'User-agent: *',
+		'Content-Signal: search=yes, ai-input=yes, ai-train=no',
+		'Allow: /',
+		'',
+		`Sitemap: ${PROD_SITEMAP}`,
+		'',
+	].join('\n');
+
+	return new Response(body, {
+		status: 200,
+		headers: buildHeaders('public, max-age=3600, s-maxage=3600'),
+	});
 }

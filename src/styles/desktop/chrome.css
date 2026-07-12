@@ -138,13 +138,13 @@ a {
   font-family: var(--font-ui);
   font-size: 12px;
   letter-spacing: 0.04em;
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
   line-height: 1.35;
   background: var(--bg);
 }
 .vk-coord b {
-  color: var(--text-muted);
+  color: var(--text-strong);
   font-weight: 500;
 }
 
@@ -215,15 +215,19 @@ a {
 }
 .vk-swatches {
   display: flex;
-  gap: 7px;
+  gap: 8px;
 }
+/* 24px tap target (WCAG 2.5.8) with a ~16px visible dot: the colour fills the
+   content-box, the transparent padding grows the hit area. */
 .vk-swatch {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  padding: 4px;
+  background-clip: content-box;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.25);
   cursor: pointer;
-  padding: 0;
 }
 .vk-swatch.is-on {
   box-shadow:
@@ -275,7 +279,7 @@ a {
 .vk-lang button {
   background: none;
   border: none;
-  color: var(--text-faint);
+  color: var(--text-muted);
   font: inherit;
   cursor: pointer;
   padding: 0;
@@ -286,7 +290,7 @@ a {
   color: var(--accent);
 }
 .vk-lang span {
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 /* themed arrow cursor (fine pointers only) */

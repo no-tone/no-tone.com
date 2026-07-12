@@ -36,6 +36,42 @@ const PERMISSIONS_POLICY = [
 	'xr-spatial-tracking=()',
 ].join(', ');
 
+const SITE_ORIGIN = 'https://no-tone.com';
+
+// RFC 9727 API catalog describing the one public API this site exposes.
+const API_CATALOG = JSON.stringify({
+	linkset: [
+		{
+			anchor: `${SITE_ORIGIN}/api/projects.json`,
+			'service-desc': [
+				{ href: `${SITE_ORIGIN}/api/projects.json`, type: 'application/json' },
+			],
+		},
+	],
+});
+
+// Machine-readable homepage for agents that send `Accept: text/markdown`.
+const AGENT_MARKDOWN = [
+	'# no-tone',
+	'',
+	'A dark, monochrome desktop-style portfolio navigated through an interactive dotted globe.',
+	'',
+	'## Navigate',
+	'- **projects** — selected work, live from GitHub',
+	'- **cv** — experience, education, skills',
+	'- **about** — bio, stack, and contact',
+	'- **github** — https://github.com/no-tone',
+	'- **contact** — msg@no-tone.com',
+	'',
+	'## API',
+	'- `GET /api/projects.json` — public repositories as JSON',
+	'',
+	'## More',
+	'- Sitemap: https://no-tone.com/sitemap.xml',
+	'- API catalog: https://no-tone.com/.well-known/api-catalog',
+	'',
+].join('\n');
+
 const generateNonce = (): string => {
 	try {
 		const bytes = crypto.getRandomValues(new Uint8Array(16));
@@ -63,6 +99,33 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 				'Content-Type': 'text/plain; charset=utf-8',
 				'Cache-Control': 'no-store',
 				'X-Robots-Tag': DEV_ROBOTS_TAG,
+			},
+		});
+	}
+
+	// RFC 9727 API catalog (agent discovery for /api/projects.json).
+	if (requestUrl.pathname === '/.well-known/api-catalog') {
+		return new Response(API_CATALOG, {
+			status: 200,
+			headers: {
+				'Content-Type': 'application/linkset+json; charset=utf-8',
+				'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+				'X-Content-Type-Options': 'nosniff',
+			},
+		});
+	}
+
+	// Markdown content negotiation: agents that ask for text/markdown get a
+	// machine-readable homepage; browsers (which don't) still get the app.
+	const accept = context.request.headers.get('Accept') || '';
+	if (requestUrl.pathname === '/' && accept.includes('text/markdown')) {
+		return new Response(AGENT_MARKDOWN, {
+			status: 200,
+			headers: {
+				'Content-Type': 'text/markdown; charset=utf-8',
+				'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+				'X-Content-Type-Options': 'nosniff',
+				Vary: 'Accept',
 			},
 		});
 	}
@@ -95,6 +158,8 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 		'Cross-Origin-Embedder-Policy': 'unsafe-none',
 		'X-Frame-Options': 'SAMEORIGIN',
 		'Reporting-Endpoints': `csp="${cspReportUrl}"`,
+		// RFC 8288 discovery links for agents.
+		Link: '</.well-known/api-catalog>; rel="api-catalog", </llms.txt>; rel="describedby"; type="text/markdown"',
 	};
 	for (const [name, value] of Object.entries(baseHeaders)) {
 		response.headers.set(name, value);

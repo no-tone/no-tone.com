@@ -3,9 +3,11 @@
    Token prefix (--vire-*) kept as shipped by Claude Design.
 
    Fonts: @font-face lives here (this file is inlined under the CSP
-   nonce, so style-src is satisfied) and points at hosted woff2 that
-   load under `font-src 'self' https:`. No woff2 is committed; with
-   Cloudflare Fonts enabled the zone proxies gstatic to the origin.
+   nonce, so style-src is satisfied) and points at SELF-HOSTED woff2
+   under /fonts (font-src 'self'). Self-hosting avoids the gstatic
+   cross-origin dependency — hotlinking it tripped both the strict CSP
+   and, later, a CORS preflight (a `Signature-Agent` request header
+   from bot-auth clients that gstatic's ACAO doesn't allow).
    ============================================================ */
 
 @font-face {
@@ -13,16 +15,14 @@
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url("https://fonts.gstatic.com/s/hankengrotesk/v12/ieVn2YZDLWuGJpnzaiwFXS9tYtpd59CxCis4.woff2")
-    format("woff2");
+  src: url("/fonts/hanken-grotesk-var.woff2") format("woff2");
 }
 @font-face {
   font-family: "Yeseva One";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("https://fonts.gstatic.com/s/yesevaone/v24/OpNJno4ck8vc-xYpwWWxli1VWzfAw0Y.woff2")
-    format("woff2");
+  src: url("/fonts/yeseva-400.woff2") format("woff2");
 }
 
 :root {

@@ -10,7 +10,6 @@
    ============================================================ */
 
 const DEG = Math.PI / 180;
-import { DynCSS } from "./dynamic-css";
 
 type Vec3 = [number, number, number];
 type Ring = [number, number][]; // [lon, lat]
@@ -116,7 +115,6 @@ export class VireGlobe {
   private raf: number | null = null;
   private readonly onResize: () => void;
   private detachDrag: (() => void) | null = null;
-  private nodeSheet = new DynCSS();
   private w = 0;
   private h = 0;
   private R = 0;
@@ -274,14 +272,15 @@ export class VireGlobe {
       }
     }
 
-    // Position nodes via CSP-safe dynamic stylesheet
-    const nodeRules: string[] = [];
+    // Position nodes via CSSOM. Writing element.style is exempt from the
+    // style-src CSP (only literal `style=` attributes are policed), and it's
+    // far cheaper than re-parsing a whole stylesheet every animation frame.
     for (const { n, p } of proj) {
       const front = p.z > -0.06;
       if (n.el) {
-        nodeRules.push(
-          `.vk-node[data-node="${n.id}"] { transform: translate(-50%,-50%) translate(${p.x}px,${p.y}px); opacity: ${front ? 1 : 0}; pointer-events: ${front ? 'auto' : 'none'}; }`,
-        );
+        n.el.style.transform = `translate(-50%,-50%) translate(${p.x}px,${p.y}px)`;
+        n.el.style.opacity = front ? "1" : "0";
+        n.el.style.pointerEvents = front ? "auto" : "none";
       }
       if (front) {
         ctx.beginPath();
@@ -299,8 +298,6 @@ export class VireGlobe {
         ctx.fill();
       }
     }
-
-    if (nodeRules.length) this.nodeSheet.set(nodeRules.join('\n'));
 
     if (!this.dragging) this.rot += this.autoSpeed;
   }

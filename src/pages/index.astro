@@ -55,11 +55,23 @@ const NODES = [
       viewport="width=device-width, initial-scale=1, viewport-fit=cover"
       defaultFont={false}
     />
-    <!-- Hanken Grotesk (UI/body) + Yeseva One (display). @font-face is in
-         the inlined (nonce'd) desktop CSS; only the woff2 files are fetched
-         (font-src https:), so nothing is committed and the CSP stays intact.
-         Cloudflare Fonts, if enabled, proxies gstatic to the origin. -->
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <!-- Hanken Grotesk (UI/body) + Yeseva One (display), self-hosted under
+         /fonts. @font-face is in the inlined (nonce'd) desktop CSS; preloading
+         the woff2 avoids a flash of fallback text. -->
+    <link
+      rel="preload"
+      href="/fonts/hanken-grotesk-var.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="preload"
+      href="/fonts/yeseva-400.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
   </head>
   <body>
     <!-- SEO / no-JS: the desktop is a canvas app, so expose the map in text. -->

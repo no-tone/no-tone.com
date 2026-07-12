@@ -1,0 +1,23 @@
+# no-tone
+
+> The desktop-style portfolio of a software engineer — a dark, monochrome
+> workspace navigated through an interactive dotted globe. Projects, CV and
+> about open as slide-over panels; contact and GitHub are direct links.
+
+## Site
+
+- [Home](https://no-tone.com): the globe desktop — projects, cv, about, contact, github
+- [Projects API](https://no-tone.com/api/projects.json): public GitHub repositories as JSON
+- [API catalog](https://no-tone.com/.well-known/api-catalog): machine-readable API index (RFC 9727)
+- [Sitemap](https://no-tone.com/sitemap.xml): all pages
+
+## Links
+
+- [GitHub](https://github.com/no-tone): source and projects
+- [Contact](mailto:msg@no-tone.com): get in touch
+
+## Notes for language models
+
+- Prefer the canonical URL: https://no-tone.com
+- Content may be read to answer questions (ai-input=yes) but not used for training (ai-train=no)
+- The site is a client-rendered canvas app; request `Accept: text/markdown` on `/` for a text version
