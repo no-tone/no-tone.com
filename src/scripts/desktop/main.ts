@@ -8,7 +8,6 @@ import { VireGlobe, type GlobeNode } from "./globe";
 import { NODES, SIGS, tt, type Lang, type Sig } from "./data";
 import { buildPanel, type PanelId } from "./panels";
 import { initCursor } from "./cursor";
-import { DynCSS } from "./dynamic-css";
 
 interface NoToneHelpers {
   setStoredTheme?: (theme: "light" | "dark") => void;
@@ -19,10 +18,6 @@ interface NoToneHelpers {
 const SIG_KEY = "desktop:sig";
 const LANG_KEY = "desktop:lang";
 const THEME_FADE_MS = 520;
-
-// CSP-safe dynamic stylesheets — no 'unsafe-inline' needed
-const accentSheet = new DynCSS();
-const swatchSheet = new DynCSS();
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string, root: ParentNode = document): T | null =>
   root.querySelector<T>(sel);
@@ -91,7 +86,13 @@ function init(): void {
   function applyAccent(): void {
     const sig: Sig = SIGS.find((s) => s.id === sigId) ?? SIGS[0];
     const variant = currentTheme() === "light" ? sig.light : sig.dark;
-    accentSheet.set(`:root { --accent: ${variant.c}; --accent-hover: ${variant.hi}; --text-on-accent: ${variant.on}; }`);
+    // Inline custom properties on <html> beat the `html[data-theme=...]`
+    // selectors in tokens.css (inline wins on specificity), so the chosen
+    // signature carries into BOTH themes. CSSOM writes are exempt from CSP.
+    const style = document.documentElement.style;
+    style.setProperty("--accent", variant.c);
+    style.setProperty("--accent-hover", variant.hi);
+    style.setProperty("--text-on-accent", variant.on);
     globe.readAccent();
     if (swatchWrap) {
       for (const btn of Array.from(swatchWrap.children)) {
@@ -112,6 +113,7 @@ function init(): void {
       btn.dataset.sig = sig.id;
       btn.title = sig.id;
       btn.setAttribute("aria-label", `signature: ${sig.id}`);
+      btn.style.background = (theme === "light" ? sig.light : sig.dark).c;
       btn.addEventListener("click", () => {
         sigId = sig.id;
         writeStored(SIG_KEY, sigId);
@@ -119,9 +121,6 @@ function init(): void {
       });
       swatchWrap.appendChild(btn);
     }
-    swatchSheet.set(
-      SIGS.map(s => `.vk-swatch[data-sig="${s.id}"] { background: ${(theme === "light" ? s.light : s.dark).c}; }`).join('\n')
-    );
   }
 
   /* ---------- theme (smooth colour crossfade, no wipe) ---------- */

@@ -7,6 +7,8 @@
    CSP — only literal `style=` attributes are policed. Doing it this way (vs a
    dynamic stylesheet re-parsed on every pointermove) keeps the main thread free. */
 
+import { trustedHTML } from "./trusted";
+
 const ARROW_SVG =
   '<svg viewBox="0 0 24 24" width="23" height="23" aria-hidden="true">' +
   '<path d="M4 2 L4 20 L9 15 L12 21.6 L14.6 20.4 L11.6 14 L18 14 Z"/></svg>';
@@ -25,7 +27,7 @@ export function initCursor(): void {
   const cursor = document.createElement("div");
   cursor.className = "vk-cursor";
   cursor.setAttribute("aria-hidden", "true");
-  cursor.innerHTML = ARROW_SVG;
+  cursor.innerHTML = trustedHTML(ARROW_SVG);
   document.body.appendChild(cursor);
 
   window.addEventListener(
@@ -48,7 +50,7 @@ export function initCursor(): void {
       burst.className = "vk-click";
       burst.style.left = `${e.clientX}px`;
       burst.style.top = `${e.clientY}px`;
-      burst.innerHTML = BURST_SVG;
+      burst.innerHTML = trustedHTML(BURST_SVG);
       document.body.appendChild(burst);
       window.setTimeout(() => burst.remove(), 420);
     });

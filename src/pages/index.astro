@@ -9,6 +9,20 @@ import componentsCss from "../styles/desktop/components.css?inline";
 import chromeCss from "../styles/desktop/chrome.css?inline";
 import panelsCss from "../styles/desktop/panels.css?inline";
 import responsiveCss from "../styles/desktop/responsive.css?inline";
+// Real content, server-rendered into a visually-hidden block so crawlers and
+// LLMs (which don't run the canvas app) still get the substance. Single source
+// of truth shared with the client panels.
+import {
+  STR,
+  BEST_AT,
+  SKILLS,
+  EXPERIENCE,
+  EDUCATION,
+  SPOKEN,
+  INTERESTS,
+  FALLBACK_PROJECTS,
+} from "../scripts/desktop/data";
+const en = STR.en;
 const desktopCss = [
   tokensCss,
   baseCss,
@@ -53,7 +67,6 @@ const NODES = [
       schema={homeSchema}
       css={desktopCss}
       viewport="width=device-width, initial-scale=1, viewport-fit=cover"
-      defaultFont={false}
     />
     <!-- Hanken Grotesk (UI/body) + Yeseva One (display), self-hosted under
          /fonts. @font-face is in the inlined (nonce'd) desktop CSS; preloading
@@ -74,16 +87,57 @@ const NODES = [
     />
   </head>
   <body>
-    <!-- SEO / no-JS: the desktop is a canvas app, so expose the map in text. -->
     <section class="sr-only">
       <h1>no-tone — a desktop of tools, experiments and marks in the making</h1>
-      <p>
-        Navigate the globe or the index: projects, cv, about, contact and
-        github. no-tone is the workshop of a software engineer.
-      </p>
+      <p>no-tone {en.aboutLead} {en.cvLead}</p>
+      <p>{en.aboutP2}</p>
+
+      <h2>What I'm best at</h2>
       <ul>
-        <li><a href="https://github.com/no-tone">github</a></li>
-        <li><a href="mailto:msg@no-tone.com">contact — msg@no-tone.com</a></li>
+        {BEST_AT.map((b) => <li>{b.k} — {b.v}</li>)}
+      </ul>
+
+      <h2>Stack and tools</h2>
+      <p>
+        Languages: {SKILLS.languages.join(", ")}. Frameworks: {SKILLS.frameworks.join(", ")}.
+        Infrastructure: {SKILLS.infra.join(", ")}.
+      </p>
+
+      <h2>Experience</h2>
+      <ul>
+        {
+          EXPERIENCE.map((e) => (
+            <li>
+              {e.role}, {e.org} ({e.period}) — {e.bullets[0]}
+            </li>
+          ))
+        }
+      </ul>
+
+      <h2>Education</h2>
+      <ul>
+        {EDUCATION.map((e) => <li>{e.title} ({e.period})</li>)}
+      </ul>
+
+      <h2>Selected projects</h2>
+      <ul>
+        {
+          FALLBACK_PROJECTS.map((p) => (
+            <li>
+              <a href={p.url}>{p.name}</a> — {p.description}
+              {p.language ? ` (${p.language}${p.year ? `, ${p.year}` : ""})` : ""}
+            </li>
+          ))
+        }
+      </ul>
+
+      <h2>Languages and interests</h2>
+      <p>{SPOKEN.join(", ")}. Interests: {INTERESTS.join(", ")}.</p>
+
+      <h2>Contact</h2>
+      <ul>
+        <li><a href="https://github.com/no-tone">GitHub — github.com/no-tone</a></li>
+        <li><a href="mailto:msg@no-tone.com">Email — msg@no-tone.com</a></li>
       </ul>
     </section>
 

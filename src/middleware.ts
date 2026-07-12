@@ -195,9 +195,14 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 		'report-to csp',
 	];
 
-	// Avoid breaking local HTTP dev by upgrading.
+	// Prod-only: upgrade mixed content, and require Trusted Types for DOM-XSS
+	// sinks. Our innerHTML sinks (README + cursor SVGs) go through the "notone"
+	// policy in trusted.ts. Kept off localhost so Astro's dev toolbar/HMR, which
+	// use innerHTML freely, aren't blocked.
 	if (!isLocalDev) {
 		directives.push('upgrade-insecure-requests');
+		directives.push("require-trusted-types-for 'script'");
+		directives.push('trusted-types notone');
 	}
 
 	const csp = directives.join('; ');

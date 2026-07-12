@@ -1,5 +1,4 @@
 ---
-import globalCss from "../styles/global.css?inline";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../consts";
 
 interface Props {
@@ -7,12 +6,11 @@ interface Props {
   description: string;
   image?: string;
   schema?: Record<string, unknown> | Array<Record<string, unknown>>;
-  /** Override the inlined stylesheet (defaults to the shared global.css). */
+  /** Inlined, nonce'd stylesheet for the page (required in practice; the two
+   *  pages that use BaseHead both pass their own desktop CSS). */
   css?: string;
   /** Override the viewport meta (e.g. to opt into safe-area insets). */
   viewport?: string;
-  /** Emit the default JetBrains Mono font link. Off for pages that self-host. */
-  defaultFont?: boolean;
 }
 
 const {
@@ -22,11 +20,8 @@ const {
   schema,
   css,
   viewport = "width=device-width,initial-scale=1",
-  defaultFont = true,
 } = Astro.props as Props;
-const styleCss = css ?? globalCss;
-const jbMonoFontUrl = import.meta.env.PUBLIC_JB_MONO_FONT_URL;
-const fontOrigin = jbMonoFontUrl ? new URL(jbMonoFontUrl).origin : null;
+const styleCss = css ?? "";
 const cspNonce = Astro.locals.cspNonce;
 
 const canonicalURL = Astro.site
@@ -89,15 +84,6 @@ const resolvedSchema = [...defaultSchema, ...schemaItems];
 <meta name="generator" content={Astro.generator} />
 <meta name="robots" content="index,follow" />
 <style nonce={cspNonce} set:html={styleCss}></style>
-<!-- Preconnect to Cloudflare Fonts origin -->
-{
-  defaultFont && fontOrigin && fontOrigin !== canonicalURL.origin && (
-    <link rel="preconnect" href={fontOrigin} crossorigin="anonymous" />
-  )
-}
-
-<!-- Cloudflare Fonts (JetBrains Mono Variable) -->
-{defaultFont && jbMonoFontUrl && <link rel="stylesheet" href={jbMonoFontUrl} />}
 
 <!-- Theme bootstrap (runs before first paint) -->
 <script is:inline nonce={cspNonce}>
