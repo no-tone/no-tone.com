@@ -7,12 +7,18 @@ import { tt, fetchRepos, fetchReadme, type Lang, type Project } from "../data";
 type SortId = "recent" | "name" | "stars";
 
 function sanitizeReadme(html: string): DocumentFragment {
+  const cleaned = html
+    .replace(/\sstyle\s*=\s*"[^"]*"/gi, "")
+    .replace(/\sstyle\s*=\s*'[^']*'/gi, "")
+    .replace(/\son[a-z-]+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son[a-z-]+\s*=\s*'[^']*'/gi, "");
   const tpl = document.createElement("template");
-  tpl.innerHTML = html;
+  tpl.innerHTML = cleaned;
   const frag = tpl.content;
   frag
     .querySelectorAll("script, style, link, iframe, object, embed, meta, base, form")
     .forEach((el) => el.remove());
+  // Defensive second pass for anything the string sweep missed.
   frag.querySelectorAll("*").forEach((el) => {
     for (const attr of Array.from(el.attributes)) {
       const name = attr.name.toLowerCase();
