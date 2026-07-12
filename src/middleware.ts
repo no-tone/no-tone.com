@@ -5,23 +5,31 @@ const CSP_REPORT_PATH = '/api/csp-report';
 const DEV_HOSTNAME = 'dev.no-tone.com';
 const DEV_ROBOTS_TXT = 'User-agent: *\nDisallow: /\n';
 const DEV_ROBOTS_TAG = 'noindex, nofollow, noarchive, nosnippet';
+// Only browser-recognized Permissions-Policy features (the Privacy-Sandbox /
+// ad-tech tokens like browsing-topics/attribution-reporting log "Unrecognized
+// feature" warnings and are dropped). Mirrors the edge Transform Rule so dev
+// and prod behave the same, and grants the untitled.stream embed its features.
 const PERMISSIONS_POLICY = [
-	"attribution-reporting=()",
-	"bluetooth=()",
-	"browsing-topics=()",
-	"camera=()",
-	"geolocation=()",
-	"interest-cohort=()",
-	"join-ad-interest-group=()",
-	"microphone=()",
-	"payment=()",
-	"private-aggregation=()",
-	"private-state-token-issuance=()",
-	"private-state-token-redemption=()",
-	"protected-audience=()",
-	"run-ad-auction=()",
-	"shared-storage=()",
-	"usb=()",
+	'accelerometer=()',
+	'autoplay=(self "https://untitled.stream")',
+	'camera=()',
+	'clipboard-read=()',
+	'clipboard-write=(self)',
+	'display-capture=()',
+	'encrypted-media=(self "https://untitled.stream")',
+	'fullscreen=(self "https://untitled.stream")',
+	'geolocation=()',
+	'gyroscope=()',
+	'magnetometer=()',
+	'microphone=()',
+	'midi=()',
+	'payment=()',
+	'picture-in-picture=(self "https://untitled.stream")',
+	'publickey-credentials-get=()',
+	'screen-wake-lock=()',
+	'sync-xhr=()',
+	'usb=()',
+	'xr-spatial-tracking=()',
 ].join(', ');
 
 const generateNonce = (): string => {

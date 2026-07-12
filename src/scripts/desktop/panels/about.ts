@@ -66,8 +66,8 @@ export function buildAbout(lang: Lang): HTMLElement {
       src: "https://untitled.stream/embed/xO9h0alF1WkD",
       title: "untitled.stream player",
       loading: "lazy",
+      referrerpolicy: "strict-origin-when-cross-origin",
       allow: "autoplay; encrypted-media; picture-in-picture; clipboard-write; fullscreen",
-      allowfullscreen: "",
     }),
   );
 

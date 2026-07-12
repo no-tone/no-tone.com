@@ -1,4 +1,5 @@
 import type { APIContext } from "astro";
+import { env } from "cloudflare:workers";
 import { simplifyRepos, type SimplifiedRepo } from "../../utils/projects-api";
 
 const GITHUB_API_URL =
@@ -167,10 +168,16 @@ export async function GET(context: APIContext): Promise<Response> {
 
   // Optional PAT (set with `wrangler secret put GITHUB_TOKEN`). Without it the
   // Worker shares an unauthenticated 60 req/hr GitHub budget with everything
-  // else on the Cloudflare colo IP, which is what intermittently 503s here.
-  const ghToken = (
-    context.locals as { runtime?: { env?: Record<string, string | undefined> } }
-  ).runtime?.env?.GITHUB_TOKEN;
+  // else on the Cloudflare colo IP, which is what intermittently rate-limits
+  // this endpoint. Read via the supported `cloudflare:workers` env binding
+  // (Astro.locals.runtime.env was removed in Astro v6); guarded so a missing
+  // binding never throws the request into a 500.
+  let ghToken: string | undefined;
+  try {
+    ghToken = (env as unknown as { GITHUB_TOKEN?: string }).GITHUB_TOKEN;
+  } catch {
+    ghToken = undefined;
+  }
 
   const upstreamStartedAt = Date.now();
   try {
