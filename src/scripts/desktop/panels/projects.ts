@@ -3,7 +3,6 @@
 import { h, clear } from "../dom";
 import { tag, btnLink, openExternal, panelHead } from "../components";
 import { tt, fetchRepos, fetchReadme, type Lang, type Project } from "../data";
-import { trustedHTML } from "../trusted";
 
 type SortId = "recent" | "name" | "stars";
 
@@ -18,7 +17,7 @@ function sanitizeReadme(html: string, repo: string): DocumentFragment {
     .replace(/\son[a-z-]+\s*=\s*"[^"]*"/gi, "")
     .replace(/\son[a-z-]+\s*=\s*'[^']*'/gi, "");
   const tpl = document.createElement("template");
-  tpl.innerHTML = trustedHTML(cleaned);
+  tpl.innerHTML = cleaned;
   const frag = tpl.content;
   frag
     .querySelectorAll("script, style, link, iframe, object, embed, meta, base, form")

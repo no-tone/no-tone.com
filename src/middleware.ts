@@ -195,14 +195,17 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 		'report-to csp',
 	];
 
-	// Prod-only: upgrade mixed content, and require Trusted Types for DOM-XSS
-	// sinks. Our innerHTML sinks (README + cursor SVGs) go through the "notone"
-	// policy in trusted.ts. Kept off localhost so Astro's dev toolbar/HMR, which
-	// use innerHTML freely, aren't blocked.
+	// Avoid breaking local HTTP dev by upgrading.
+	// NOTE: Trusted Types (`require-trusted-types-for 'script'`) was tried here
+	// but reverted — Cloudflare Bot Fight Mode / JS Detections injects an inline
+	// loader + `cdn-cgi/challenge-platform/scripts/jsd/main.js` that assign
+	// innerHTML without a TT policy, so enforcement threw and broke the page.
+	// (That same feature is the source of the stray picture-in-picture warning
+	// and the ad-tech Permissions-Policy warnings, which come from Cloudflare's
+	// own cdn-cgi response headers, not ours.) Re-add TT only after turning that
+	// Cloudflare feature off.
 	if (!isLocalDev) {
 		directives.push('upgrade-insecure-requests');
-		directives.push("require-trusted-types-for 'script'");
-		directives.push('trusted-types notone');
 	}
 
 	const csp = directives.join('; ');
