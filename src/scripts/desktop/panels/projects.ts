@@ -6,6 +6,22 @@ import { tt, fetchRepos, fetchReadme, type Lang, type Project } from "../data";
 
 type SortId = "recent" | "name" | "stars";
 
+function sanitizeReadme(html: string): DocumentFragment {
+  const tpl = document.createElement("template");
+  tpl.innerHTML = html;
+  const frag = tpl.content;
+  frag
+    .querySelectorAll("script, style, link, iframe, object, embed, meta, base, form")
+    .forEach((el) => el.remove());
+  frag.querySelectorAll("*").forEach((el) => {
+    for (const attr of Array.from(el.attributes)) {
+      const name = attr.name.toLowerCase();
+      if (name === "style" || name.startsWith("on")) el.removeAttribute(attr.name);
+    }
+  });
+  return frag;
+}
+
 export function buildProjects(lang: Lang): HTMLElement {
   const t = (k: string) => tt(lang, k);
   const SORTS: { id: SortId; label: string }[] = [
@@ -164,7 +180,7 @@ export function buildProjects(lang: Lang): HTMLElement {
       clear(readmeBox);
       if (html) {
         const prose = h("div", { class: "prose" });
-        prose.innerHTML = html; // GitHub-sanitized HTML fragment
+        prose.appendChild(sanitizeReadme(html));
         readmeBox.appendChild(prose);
       } else {
         readmeBox.appendChild(h("div", { class: "vp__muted" }, t("noReadme")));

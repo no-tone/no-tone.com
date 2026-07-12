@@ -56,11 +56,27 @@ export function buildAbout(lang: Lang): HTMLElement {
     contact,
   );
 
+
+  const embed = h(
+    "div",
+    { class: "vp__embed" },
+    h("div", { class: "vp__sub" }, t("onRepeat")),
+    h("iframe", {
+      class: "vp__embed-frame",
+      src: "https://untitled.stream/embed/xO9h0alF1WkD",
+      title: "untitled.stream player",
+      loading: "lazy",
+      allow: "autoplay; encrypted-media; picture-in-picture; clipboard-write; fullscreen",
+      allowfullscreen: "",
+    }),
+  );
+
   const right = h(
     "div",
     {},
     h("div", { class: "vp__sub" }, t("howGlobe")),
     codeBlock("globe.ts", GLOBE_CODE),
+    embed,
   );
 
   void fetchRepos().then((r) => {

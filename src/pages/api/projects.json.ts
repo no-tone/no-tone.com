@@ -165,12 +165,20 @@ export async function GET(context: APIContext): Promise<Response> {
     }
   }
 
+  // Optional PAT (set with `wrangler secret put GITHUB_TOKEN`). Without it the
+  // Worker shares an unauthenticated 60 req/hr GitHub budget with everything
+  // else on the Cloudflare colo IP, which is what intermittently 503s here.
+  const ghToken = (
+    context.locals as { runtime?: { env?: Record<string, string | undefined> } }
+  ).runtime?.env?.GITHUB_TOKEN;
+
   const upstreamStartedAt = Date.now();
   try {
     const upstream = await fetch(GITHUB_API_URL, {
       headers: {
         "User-Agent": "no-tone-site",
         Accept: "application/vnd.github.mercy-preview+json",
+        ...(ghToken ? { Authorization: `Bearer ${ghToken}` } : {}),
         ...(cachedSnapshot?.etag
           ? { "If-None-Match": cachedSnapshot.etag }
           : {}),
@@ -250,8 +258,12 @@ export async function GET(context: APIContext): Promise<Response> {
       );
     }
 
-    return jsonError(503, "Projects temporarily unavailable", origin ?? null, {
-      "Retry-After": String(BROWSER_TTL_SECONDS),
+    return new Response("[]", {
+      status: 200,
+      headers: buildHeaders(origin ?? null, {
+        "Cache-Control": "no-store",
+        "X-No-Tone-Cache": "unavailable",
+      }),
     });
   }
 }
