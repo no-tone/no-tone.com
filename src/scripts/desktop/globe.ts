@@ -115,6 +115,7 @@ export class VireGlobe {
   private dragging = false;
   private raf: number | null = null;
   private readonly onResize: () => void;
+  private detachDrag: (() => void) | null = null;
   private nodeSheet = new DynCSS();
   private w = 0;
   private h = 0;
@@ -160,39 +161,49 @@ export class VireGlobe {
 
   private bindDrag(): void {
     const c = this.canvas;
-    this.nodeSheet.set(".vk-canvas { touch-action: none; cursor: grab; }");
     let lx = 0;
     let ly = 0;
-    c.addEventListener("pointerdown", (e) => {
-      // Only grab when the press lands on the sphere itself; clicks in the
-      // empty space around it (or on chrome) should not rotate/pause it.
+    let downX = 0;
+    let downY = 0;
+    let active = false;
+
+    const onDown = (e: PointerEvent) => {
       const rect = c.getBoundingClientRect();
       const dx = e.clientX - rect.left - this.cx;
       const dy = e.clientY - rect.top - this.cy;
-      if (Math.hypot(dx, dy) > this.R * 1.06) return;
-      this.dragging = true;
-      lx = e.clientX;
-      ly = e.clientY;
-      this.nodeSheet.set(".vk-canvas { touch-action: none; cursor: grabbing; }");
-      try {
-        c.setPointerCapture(e.pointerId);
-      } catch {
-        /* no-op */
+      if (Math.hypot(dx, dy) > this.R * 1.05) return;
+      active = true;
+      lx = downX = e.clientX;
+      ly = downY = e.clientY;
+    };
+    // Tracked on window (not the canvas) so the drag survives the pointer
+    // crossing nodes/chrome and runs its full range on both mouse and touch.
+    const onMove = (e: PointerEvent) => {
+      if (!active) return;
+      if (!this.dragging) {
+        if (Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY) < 4) return;
+        this.dragging = true;
       }
-    });
-    c.addEventListener("pointermove", (e) => {
-      if (!this.dragging) return;
       this.rot += (e.clientX - lx) * 0.006;
       this.tilt = Math.max(-1.25, Math.min(1.25, this.tilt - (e.clientY - ly) * 0.004));
       lx = e.clientX;
       ly = e.clientY;
-    });
-    const up = () => {
-      this.dragging = false;
-      this.nodeSheet.set(".vk-canvas { touch-action: none; cursor: grab; }");
     };
-    c.addEventListener("pointerup", up);
-    c.addEventListener("pointercancel", up);
+    const onUp = () => {
+      active = false;
+      this.dragging = false;
+    };
+
+    c.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    this.detachDrag = () => {
+      c.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
   }
 
   private resize(): void {
@@ -313,5 +324,6 @@ export class VireGlobe {
   destroy(): void {
     this.stop();
     window.removeEventListener("resize", this.onResize);
+    this.detachDrag?.();
   }
 }

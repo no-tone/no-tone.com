@@ -6,7 +6,11 @@ import { tt, fetchRepos, fetchReadme, type Lang, type Project } from "../data";
 
 type SortId = "recent" | "name" | "stars";
 
-function sanitizeReadme(html: string): DocumentFragment {
+const GH_USER = "no-tone";
+const isAbsoluteUrl = (u: string) => /^(?:https?:|mailto:|data:|#|\/\/)/i.test(u);
+
+function sanitizeReadme(html: string, repo: string): DocumentFragment {
+
   const cleaned = html
     .replace(/\sstyle\s*=\s*"[^"]*"/gi, "")
     .replace(/\sstyle\s*=\s*'[^']*'/gi, "")
@@ -24,6 +28,20 @@ function sanitizeReadme(html: string): DocumentFragment {
       const name = attr.name.toLowerCase();
       if (name === "style" || name.startsWith("on")) el.removeAttribute(attr.name);
     }
+  });
+  // The GitHub HTML endpoint leaves repo-relative URLs relative, so they'd
+  // resolve against no-tone.com (404). Point images at raw.githubusercontent
+  // and links at the repo's blob view.
+  const rawBase = `https://raw.githubusercontent.com/${GH_USER}/${repo}/HEAD/`;
+  const blobBase = `https://github.com/${GH_USER}/${repo}/blob/HEAD/`;
+  const rel = (u: string) => u.replace(/^\.?\//, "");
+  frag.querySelectorAll("img[src]").forEach((el) => {
+    const src = el.getAttribute("src") || "";
+    if (src && !isAbsoluteUrl(src)) el.setAttribute("src", rawBase + rel(src));
+  });
+  frag.querySelectorAll("a[href]").forEach((el) => {
+    const href = el.getAttribute("href") || "";
+    if (href && !isAbsoluteUrl(href)) el.setAttribute("href", blobBase + rel(href));
   });
   return frag;
 }
@@ -49,6 +67,7 @@ export function buildProjects(lang: Lang): HTMLElement {
   const input = h("input", {
     class: "vire-input",
     type: "text",
+    name: "filter",
     placeholder: t("filter"),
     "aria-label": t("filter"),
     onInput: (e: Event) => {
@@ -186,7 +205,7 @@ export function buildProjects(lang: Lang): HTMLElement {
       clear(readmeBox);
       if (html) {
         const prose = h("div", { class: "prose" });
-        prose.appendChild(sanitizeReadme(html));
+        prose.appendChild(sanitizeReadme(html, s.name));
         readmeBox.appendChild(prose);
       } else {
         readmeBox.appendChild(h("div", { class: "vp__muted" }, t("noReadme")));

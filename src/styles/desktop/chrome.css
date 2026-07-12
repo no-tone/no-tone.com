@@ -28,6 +28,7 @@ a {
   height: 100dvh;
   z-index: 0;
   display: block;
+  touch-action: none;
 }
 
 /* globe nodes (decorative overlay; the rail is the real nav) */
