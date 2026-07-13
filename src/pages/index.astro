@@ -94,19 +94,20 @@ const NODES = [
 
       <h2>What I'm best at</h2>
       <ul>
-        {BEST_AT.map((b) => <li>{b.k} — {b.v}</li>)}
+        {BEST_AT.en.map((b) => <li>{b.k} — {b.v}</li>)}
       </ul>
 
       <h2>Stack and tools</h2>
       <p>
-        Languages: {SKILLS.languages.join(", ")}. Frameworks: {SKILLS.frameworks.join(", ")}.
-        Infrastructure: {SKILLS.infra.join(", ")}.
+        Languages: {SKILLS.en.find((g) => g.label === "languages")?.items.join(", ")}.
+        Frameworks: {SKILLS.en.find((g) => g.label === "frameworks")?.items.join(", ")}.
+        Infrastructure: {SKILLS.en.find((g) => g.label === "infra")?.items.join(", ")}.
       </p>
 
       <h2>Experience</h2>
       <ul>
         {
-          EXPERIENCE.map((e) => (
+          EXPERIENCE.en.map((e) => (
             <li>
               {e.role}, {e.org} ({e.period}) — {e.bullets[0]}
             </li>
@@ -116,7 +117,7 @@ const NODES = [
 
       <h2>Education</h2>
       <ul>
-        {EDUCATION.map((e) => <li>{e.title} ({e.period})</li>)}
+        {EDUCATION.en.map((e) => <li>{e.title} ({e.period})</li>)}
       </ul>
 
       <h2>Selected projects</h2>
@@ -132,7 +133,7 @@ const NODES = [
       </ul>
 
       <h2>Languages and interests</h2>
-      <p>{SPOKEN.join(", ")}. Interests: {INTERESTS.join(", ")}.</p>
+      <p>{SPOKEN.en.join(", ")}. Interests: {INTERESTS.en.join(", ")}.</p>
 
       <h2>Contact</h2>
       <ul>

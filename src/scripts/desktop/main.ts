@@ -5,9 +5,11 @@
    drawer. Theme/accent/language persist in localStorage. */
 
 import { VireGlobe, type GlobeNode } from "./globe";
+import { VireGlobeGL } from "./globe-gl";
 import { NODES, SIGS, tt, type Lang, type Sig } from "./data";
 import { buildPanel, type PanelId } from "./panels";
 import { initCursor } from "./cursor";
+import { revealPanel } from "./motion";
 
 interface NoToneHelpers {
   setStoredTheme?: (theme: "light" | "dark") => void;
@@ -69,8 +71,10 @@ function init(): void {
   let open: PanelId | null = null;
   let lastFocused: HTMLElement | null = null;
 
-  /* ---------- globe ---------- */
-  const globe = new VireGlobe(canvas, { step: 4.2, autoSpeed: 0.0016, tilt: -16 });
+  /* ---------- globe (WebGL when available, canvas-2D fallback) ---------- */
+  const globe =
+    VireGlobeGL.tryCreate(canvas, { autoSpeed: 0.0016, tilt: -16 }) ??
+    new VireGlobe(canvas, { step: 4.2, autoSpeed: 0.0016, tilt: -16 });
   const nodeEls = Array.from(document.querySelectorAll<HTMLElement>(".vk-node[data-node]"));
   const globeNodes: GlobeNode[] = NODES.map((n) => ({
     id: n.id,
@@ -161,9 +165,11 @@ function init(): void {
   /* ---------- drawer ---------- */
   function renderPanel(id: PanelId): void {
     if (!sheetBody) return;
-    sheetBody.replaceChildren(buildPanel(id, lang));
+    const panel = buildPanel(id, lang);
+    sheetBody.replaceChildren(panel);
     sheetBody.scrollTop = 0;
     btt?.classList.remove("is-on");
+    revealPanel(panel);
   }
 
   function openPanel(id: PanelId): void {

@@ -348,19 +348,6 @@
   margin-top: 4px;
   line-height: 1.5;
 }
-.vp__meter {
-  display: inline-flex;
-  gap: 3px;
-}
-.vp__pip {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--border-strong);
-}
-.vp__pip.is-on {
-  background: var(--accent);
-}
 .vp__pron {
   font-size: 14px;
   color: var(--text-faint);

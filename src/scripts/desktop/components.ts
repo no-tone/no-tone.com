@@ -46,14 +46,6 @@ export function panelHead(eyebrow: string, title: string, src?: HTMLElement): HT
   );
 }
 
-export function meter(n: number): HTMLElement {
-  const wrap = h("span", { class: "vp__meter" });
-  for (let i = 1; i <= 5; i++) {
-    wrap.appendChild(h("span", { class: "vp__pip" + (i <= n ? " is-on" : "") }));
-  }
-  return wrap;
-}
-
 export function chips(items: string[], tone?: "accent"): HTMLElement {
   const wrap = h("div", { class: "vp__chips" });
   for (const s of items) wrap.appendChild(tag(s, tone));

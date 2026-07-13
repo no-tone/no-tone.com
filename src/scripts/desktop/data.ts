@@ -100,7 +100,7 @@ export const SIGS: Sig[] = [
 /* ---- CV content (from the user's own CV; roles generalized) ---- */
 export interface Exp { role: string; org: string; period: string; place: string; bullets: string[]; }
 export interface Edu { title: string; period: string; bullets: string[]; }
-export interface Best { k: string; v: string; lvl: number; }
+export interface Best { k: string; v: string; }
 
 export const EXPERIENCE: Exp[] = [
   { role: "Application Engineer", org: "digital solutions studio", period: "feb 2026 — now", place: "hybrid",
@@ -125,11 +125,11 @@ export const EDUCATION: Edu[] = [
 ];
 
 export const BEST_AT: Best[] = [
-  { k: "Full-stack product engineering", v: "React / Next.js front-ends to typed APIs and databases — end to end.", lvl: 5 },
-  { k: "Web components & design systems", v: "Reusable, framework-agnostic UI primitives with real accessibility.", lvl: 5 },
-  { k: "Security & privacy", v: "CSP, edge middleware, dependency hygiene — secure by default.", lvl: 4 },
-  { k: "Applied AI / NLP", v: "Chat, voice and generative features wired into real products.", lvl: 4 },
-  { k: "UI / UX craft", v: "Interaction detail, motion and typography that feels considered.", lvl: 4 },
+  { k: "Full-stack product engineering", v: "React / Next.js front-ends to typed APIs and databases — end to end." },
+  { k: "Web components & design systems", v: "Reusable, framework-agnostic UI primitives with real accessibility." },
+  { k: "Security & privacy", v: "CSP, edge middleware, dependency hygiene — secure by default." },
+  { k: "Applied AI / NLP", v: "Chat, voice and generative features wired into real products." },
+  { k: "UI / UX craft", v: "Interaction detail, motion and typography that feels considered." },
 ];
 
 export const SKILLS: Record<string, string[]> = {

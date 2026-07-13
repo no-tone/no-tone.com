@@ -2,7 +2,7 @@
    led by a ranked "what I'm best at" grid. */
 
 import { h } from "../dom";
-import { chips, meter, panelHead } from "../components";
+import { chips, panelHead } from "../components";
 import {
   tt,
   EXPERIENCE,
@@ -23,7 +23,7 @@ export function buildCv(lang: Lang): HTMLElement {
       h(
         "div",
         { class: "vp__bestrow" },
-        h("div", { class: "vp__bestk" }, b.k, meter(b.lvl)),
+        h("div", { class: "vp__bestk" }, b.k),
         h("div", { class: "vp__bestv" }, b.v),
       ),
     );

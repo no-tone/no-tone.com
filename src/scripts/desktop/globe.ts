@@ -82,13 +82,32 @@ function fibGrid(step: number): [number, number][] {
   return pts;
 }
 
-function llToVec(lat: number, lon: number): Vec3 {
+export interface Dot {
+  v: Vec3;
+  land: boolean;
+}
+
+/** Build the sampled dot field once — a grid of unit vectors tagged
+ *  land/ocean by sampling the rasterized continent mask. Shared by both
+ *  the canvas-2D and WebGL globe renderers so they stay pixel-identical
+ *  in layout. */
+export function buildDotField(step: number): Dot[] {
+  const mask = buildMask(720, 360);
+  return fibGrid(step).map(([lat, lon]) => {
+    const px = Math.floor(((lon + 180) / 360) * mask.W);
+    const py = Math.floor(((90 - lat) / 180) * mask.H);
+    const land = mask.data[(py * mask.W + px) * 4] > 128;
+    return { v: llToVec(lat, lon), land };
+  });
+}
+
+export function llToVec(lat: number, lon: number): Vec3 {
   const la = lat * DEG;
   const lo = lon * DEG;
   return [Math.cos(la) * Math.cos(lo), Math.sin(la), Math.cos(la) * Math.sin(lo)];
 }
 
-function hexA(hex: string, a: number): string {
+export function hexA(hex: string, a: number): string {
   hex = (hex || "#ece9e1").trim();
   if (hex[0] !== "#") return hex;
   let h = hex.slice(1);
@@ -129,14 +148,7 @@ export class VireGlobe {
     if (!ctx) throw new Error("VireGlobe: 2d context unavailable");
     this.ctx = ctx;
 
-    const mask = buildMask(720, 360);
-    const step = opts.step || 4.2;
-    this.dots = fibGrid(step).map(([lat, lon]) => {
-      const px = Math.floor(((lon + 180) / 360) * mask.W);
-      const py = Math.floor(((90 - lat) / 180) * mask.H);
-      const land = mask.data[(py * mask.W + px) * 4] > 128;
-      return { v: llToVec(lat, lon), land };
-    });
+    this.dots = buildDotField(opts.step || 4.2);
 
     this.tilt = (opts.tilt ?? -16) * DEG;
     this.autoSpeed = opts.autoSpeed ?? 0.0016;
