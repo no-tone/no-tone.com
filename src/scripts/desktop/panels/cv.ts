@@ -18,7 +18,7 @@ export function buildCv(lang: Lang): HTMLElement {
   const t = (k: string) => tt(lang, k);
 
   const best = h("div", { class: "vp__best" });
-  for (const b of BEST_AT) {
+  for (const b of BEST_AT[lang]) {
     best.appendChild(
       h(
         "div",
@@ -30,7 +30,7 @@ export function buildCv(lang: Lang): HTMLElement {
   }
 
   const expSection = h("section", {}, h("div", { class: "vp__sub" }, t("experience")));
-  for (const e of EXPERIENCE) {
+  for (const e of EXPERIENCE[lang]) {
     const bullets = h("ul", { class: "vp__expBullets" });
     for (const b of e.bullets) bullets.appendChild(h("li", {}, b));
     expSection.appendChild(
@@ -49,7 +49,7 @@ export function buildCv(lang: Lang): HTMLElement {
     );
   }
   expSection.appendChild(h("div", { class: "vp__sub vp__sub--edu" }, t("education")));
-  for (const e of EDUCATION) {
+  for (const e of EDUCATION[lang]) {
     const bullets = h("ul", { class: "vp__expBullets" });
     for (const b of e.bullets) bullets.appendChild(h("li", {}, b));
     expSection.appendChild(
@@ -68,17 +68,17 @@ export function buildCv(lang: Lang): HTMLElement {
   }
 
   const aside = h("aside", {});
-  for (const [k, arr] of Object.entries(SKILLS)) {
+  for (const group of SKILLS[lang]) {
     aside.appendChild(
-      h("div", { class: "vp__skillset" }, h("div", { class: "vp__skillk" }, k), chips(arr)),
+      h("div", { class: "vp__skillset" }, h("div", { class: "vp__skillk" }, group.label), chips(group.items)),
     );
   }
   aside.appendChild(h("div", { class: "vp__skillk" }, t("langs")));
-  const spoken = chips(SPOKEN);
+  const spoken = chips(SPOKEN[lang]);
   spoken.classList.add("vp__langs");
   aside.appendChild(spoken);
   aside.appendChild(h("div", { class: "vp__skillk" }, t("interests")));
-  aside.appendChild(chips(INTERESTS));
+  aside.appendChild(chips(INTERESTS[lang]));
 
   return h(
     "div",
